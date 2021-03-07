@@ -8,6 +8,7 @@ using Impostor.Api.Net;
 using Impostor.Api.Net.Inner;
 using Impostor.Api.Net.Messages;
 using Impostor.Hazel;
+using Impostor.Server.Events;
 using Impostor.Server.Net.Inner;
 
 namespace Impostor.Server.Net.State
@@ -45,6 +46,8 @@ namespace Impostor.Server.Net.State
 
                 await FinishRpcAsync(writer);
             }
+
+            await _eventManager.CallAsync(new GameSyncSettingsEvent(this));
         }
 
         public async ValueTask SetPrivacyAsync(bool isPublic)
