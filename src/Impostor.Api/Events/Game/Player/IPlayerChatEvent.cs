@@ -6,5 +6,7 @@
         ///     Gets the message sent by the player.
         /// </summary>
         string Message { get; }
+
+        public bool IsCancelled { get; set; }
     }
 }
