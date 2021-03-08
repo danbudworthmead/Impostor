@@ -62,6 +62,8 @@ namespace Impostor.Server.Net.Manager
             return game;
         }
 
+        public IPEndPoint PublicIp => _publicIp;
+
         private async ValueTask<(bool success, Game game)> TryCreateAsync(GameOptionsData options)
         {
             var gameCode = _gameCodeFactory.Create();
