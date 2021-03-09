@@ -63,7 +63,8 @@ namespace Impostor.Server.Net
                 case MessageFlags.HostGame:
                 {
                     // Read game settings.
-                    var gameInfo = Message00HostGameC2S.Deserialize(reader, out _);
+                    var gameInfo = Message00HostGameC2S.Deserialize(reader, out var chatType);
+                    ChatType = chatType;
 
                     // Create game.
                     var game = await _gameManager.CreateAsync(gameInfo);
@@ -245,7 +246,8 @@ namespace Impostor.Server.Net
 
                 case MessageFlags.GetGameListV2:
                 {
-                    Message16GetGameListC2S.Deserialize(reader, out var options, out _);
+                    Message16GetGameListC2S.Deserialize(reader, out var options, out var chatType);
+                    ChatType = chatType;
                     await OnRequestGameListAsync(options);
                     break;
                 }

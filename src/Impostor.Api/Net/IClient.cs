@@ -61,6 +61,8 @@ namespace Impostor.Api.Net
         /// </summary>
         IClientPlayer? Player { get; }
 
+        ChatType ChatType { get; }
+
         ValueTask<bool> ReportCheatAsync(CheatContext context, string message);
 
         ValueTask HandleMessageAsync(IMessageReader message, MessageType messageType);
