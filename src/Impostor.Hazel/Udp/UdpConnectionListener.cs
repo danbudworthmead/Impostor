@@ -129,6 +129,8 @@ namespace Impostor.Hazel.Udp
         /// </summary>
         private async Task ListenAsync()
         {
+            while (!_stoppingCts.IsCancellationRequested)
+            {
             try
             {
                 while (!_stoppingCts.IsCancellationRequested)
@@ -191,7 +193,8 @@ namespace Impostor.Hazel.Udp
             }
             catch (Exception e)
             {
-                Logger.Error(e, "Listen loop error");
+                Logger.Error(e, "Listen loop error. We currently have " + _allConnections.Count + " connections.");
+            }
             }
         }
 
