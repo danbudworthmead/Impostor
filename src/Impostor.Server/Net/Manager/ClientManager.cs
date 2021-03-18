@@ -22,6 +22,7 @@ namespace Impostor.Server.Net.Manager
         {
             GameVersion.GetVersion(2021, 3, 5), // 2021.3.5
             GameVersion.GetVersion(2021, 3, 9), // 2021.3.9
+            GameVersion.GetVersion(2021, 3, 15), // 2021.3.15
         };
 
         private static string ServerBrand { get; } = $"Impostor {DotnetUtils.GetVersion()}";
@@ -64,7 +65,7 @@ namespace Impostor.Server.Net.Manager
                 Message01JoinGameS2C.SerializeError(packet, false, DisconnectReason.Custom, 
                     "You are currently running an unsupported version of Among Us" +
                     "\n\nSupported versions:" +
-                    "\n2021.3.5, 2021.3.9");
+                    "\n2021.3.5, 2021.3.9, 2021.3.15");
                 await connection.SendAsync(packet);
                 return;
             }
