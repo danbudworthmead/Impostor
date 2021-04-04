@@ -42,6 +42,8 @@ namespace Impostor.Server.Net.Manager
 
         IEnumerable<IGame> IGameManager.Games => _games.Select(kv => kv.Value);
 
+        public IPEndPoint PublicIp { get; }
+
         IGame? IGameManager.Find(GameCode code) => Find(code);
 
         public Game? Find(GameCode code)
