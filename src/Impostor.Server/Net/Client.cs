@@ -24,8 +24,8 @@ namespace Impostor.Server.Net
         private readonly ClientManager _clientManager;
         private readonly GameManager _gameManager;
 
-        public Client(ILogger<Client> logger, IOptions<AntiCheatConfig> antiCheatOptions, ClientManager clientManager, GameManager gameManager, string name, IHazelConnection connection, ISet<Mod> mods)
-            : base(name, connection, mods)
+        public Client(ILogger<Client> logger, IOptions<AntiCheatConfig> antiCheatOptions, ClientManager clientManager, GameManager gameManager, string name, int gameVersion, IHazelConnection connection, ISet<Mod> mods)
+            : base(name, gameVersion, connection, mods)
         {
             _logger = logger;
             _antiCheatConfig = antiCheatOptions.Value;
@@ -132,7 +132,7 @@ namespace Impostor.Server.Net
                         return;
                     }
 
-                    await Player.Game.HandleStartGame(reader);
+                    await Player!.Game.HandleStartGame(reader);
                     break;
                 }
 
@@ -152,7 +152,7 @@ namespace Impostor.Server.Net
                         out var playerId,
                         out var reason);
 
-                    await Player.Game.HandleRemovePlayer(playerId, (DisconnectReason)reason);
+                    await Player!.Game.HandleRemovePlayer(playerId, (DisconnectReason)reason);
                     break;
                 }
 
@@ -169,7 +169,7 @@ namespace Impostor.Server.Net
                     // Handle packet.
                     using var readerCopy = reader.Copy();
 
-                    var verified = await Player.Game.HandleGameDataAsync(readerCopy, Player, toPlayer);
+                    var verified = await Player!.Game.HandleGameDataAsync(readerCopy, Player, toPlayer);
                     if (verified)
                     {
                         // Broadcast packet to all other players.
@@ -203,7 +203,7 @@ namespace Impostor.Server.Net
                         reader,
                         out var gameOverReason);
 
-                    await Player.Game.HandleEndGame(reader, gameOverReason);
+                    await Player!.Game.HandleEndGame(reader, gameOverReason);
                     break;
                 }
 
@@ -224,7 +224,7 @@ namespace Impostor.Server.Net
                         return;
                     }
 
-                    await Player.Game.HandleAlterGame(reader, Player, value);
+                    await Player!.Game.HandleAlterGame(reader, Player, value);
                     break;
                 }
 
@@ -240,7 +240,7 @@ namespace Impostor.Server.Net
                         out var playerId,
                         out var isBan);
 
-                    await Player.Game.HandleKickPlayer(playerId, isBan);
+                    await Player!.Game.HandleKickPlayer(playerId, isBan);
                     break;
                 }
 
