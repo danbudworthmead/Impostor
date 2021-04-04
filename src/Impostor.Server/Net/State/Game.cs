@@ -115,7 +115,7 @@ namespace Impostor.Server.Net.State
                     }
                     catch
                     {
-                        _logger.LogError("No spawn position for " + Options.Map + " in MapSpawn.Maps");
+                        // ignore
                     }
 
                     await player.Character!.NetworkTransform.SetPositionAsync(player, spawnPosition, Vector2.Zero);
