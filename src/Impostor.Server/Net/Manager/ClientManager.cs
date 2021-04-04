@@ -18,12 +18,8 @@ namespace Impostor.Server.Net.Manager
 {
     internal partial class ClientManager
     {
-        private static readonly HashSet<int> SupportedVersions = new HashSet<int>
-        {
-            GameVersion.GetVersion(2021, 3, 5), // 2021.3.5
-            GameVersion.GetVersion(2021, 3, 9), // 2021.3.9
-            GameVersion.GetVersion(2021, 3, 15), // 2021.3.15
-        };
+        private static int MinSupportedVersion { get; } = GameVersion.GetVersion(2021, 3, 25); // 2021.3.31;
+        private static int MaxSupportedVersion { get; } = GameVersion.GetVersion(2021, 4, 2); // 2021.4.2;
 
         private static readonly string ServerBrand = $"Impostor {DotnetUtils.GetVersion()}";
 
@@ -59,13 +55,13 @@ namespace Impostor.Server.Net.Manager
 
         public async ValueTask RegisterConnectionAsync(IHazelConnection connection, string name, int clientVersion, ISet<Mod>? mods)
         {
-            if (!SupportedVersions.Contains(clientVersion))
+            if (clientVersion < MinSupportedVersion || clientVersion > MaxSupportedVersion)
             {
                 using var packet = MessageWriter.Get(MessageType.Reliable);
                 Message01JoinGameS2C.SerializeError(packet, false, DisconnectReason.Custom, 
                     "You are currently running an unsupported version of Among Us" +
                     "\n\nSupported versions:" +
-                    "\n2021.3.5, 2021.3.9, 2021.3.15");
+                    "\n2021.3.31 to 2021.4.2");
                 await connection.SendAsync(packet);
                 return;
             }
