@@ -333,8 +333,7 @@ namespace Impostor.Server.Net.State
 
                     if (playerInfo != null)
                     {
-                        playerInfo.Controller = control;
-                        control.PlayerInfo = playerInfo;
+                        control.PlayerInfo.Controller = control;
                     }
 
                     await _eventManager.CallAsync(new PlayerSpawnedEvent(this, player, control));
