@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace Impostor.Server.Recorder
@@ -9,25 +8,33 @@ namespace Impostor.Server.Recorder
         private const int InitialStreamSize = 0x100;
         private const int MaximumStreamSize = 0x100000;
 
-        private MemoryStream? _memory;
-        private BinaryWriter? _writer;
+        private MemoryStream _memory;
+        private BinaryWriter _writer;
 
-        [AllowNull]
         public MemoryStream Stream
         {
             get
             {
-                return _memory ??= new MemoryStream(InitialStreamSize);
+                if (_memory == null)
+                {
+                    _memory = new MemoryStream(InitialStreamSize);
+                }
+
+                return _memory;
             }
             private set => _memory = value;
         }
 
-        [AllowNull]
         public BinaryWriter Writer
         {
             get
             {
-                return _writer ??= new BinaryWriter(Stream, Encoding.UTF8, true);
+                if (_writer == null)
+                {
+                    _writer = new BinaryWriter(Stream, Encoding.UTF8, true);
+                }
+
+                return _writer;
             }
             private set => _writer = value;
         }

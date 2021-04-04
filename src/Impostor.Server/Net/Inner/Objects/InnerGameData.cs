@@ -127,17 +127,15 @@ namespace Impostor.Server.Net.Inner.Objects
             return true;
         }
 
-        internal InnerPlayerInfo? AddPlayer(InnerPlayerControl control)
+        internal void AddPlayer(InnerPlayerControl control)
         {
             var playerId = control.PlayerId;
             var playerInfo = new InnerPlayerInfo(control.PlayerId);
 
             if (_allPlayers.TryAdd(playerId, playerInfo))
             {
-                return playerInfo;
+                control.PlayerInfo = playerInfo;
             }
-
-            return null;
         }
 
         private void SetTasks(byte playerId, ReadOnlyMemory<byte> taskTypeIds)

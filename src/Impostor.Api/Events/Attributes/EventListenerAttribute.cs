@@ -17,17 +17,17 @@ namespace Impostor.Api.Events
         }
 
         /// <summary>
-        ///     Gets or sets the priority of the event listener.
+        ///     The priority of the event listener.
         /// </summary>
         public EventPriority Priority { get; set; }
 
         /// <summary>
-        ///     Gets or sets the event that the listener is listening to.
+        ///     The events that the listener is listening to.
         /// </summary>
         public Type? Event { get; set; }
 
         /// <summary>
-        ///     Gets or sets a value indicating whether the listener will be called regardless of the <see cref="IEventCancelable.IsCancelled" />.
+        ///     If set to true, the listener will be called regardless of the <see cref="IEventCancelable.IsCancelled"/>.
         /// </summary>
         public bool IgnoreCancelled { get; set; }
     }

@@ -1,5 +1,4 @@
-﻿using System;
-using Impostor.Api.Innersloth;
+﻿using Impostor.Api.Innersloth;
 
 namespace Impostor.Api.Net.Messages.C2S
 {
@@ -7,7 +6,7 @@ namespace Impostor.Api.Net.Messages.C2S
     {
         public static void Serialize(IMessageWriter writer)
         {
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 
         public static void Deserialize(IMessageReader reader, out AlterGameTags gameTag, out bool isPublic)

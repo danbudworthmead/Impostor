@@ -20,7 +20,7 @@ namespace Impostor.Api.Net
         bool IsConnected { get; }
 
         /// <summary>
-        ///     Gets or sets the client of the connection.
+        ///     Gets the client of the connection.
         /// </summary>
         IClient? Client { get; set; }
 
@@ -28,14 +28,14 @@ namespace Impostor.Api.Net
         ///     Sends a message writer to the connection.
         /// </summary>
         /// <param name="writer">The message.</param>
-        /// <returns>Task that must be awaited.</returns>
+        /// <returns></returns>
         ValueTask SendAsync(IMessageWriter writer);
 
         /// <summary>
         ///     Disconnects the client and invokes the disconnect handler.
         /// </summary>
         /// <param name="reason">A reason.</param>
-        /// <returns>Task that must be awaited.</returns>
+        /// <returns></returns>
         ValueTask DisconnectAsync(string? reason);
     }
 }

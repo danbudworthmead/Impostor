@@ -4,9 +4,9 @@ namespace Impostor.Server.Config
 {
     internal class AnnouncementsServerConfig
     {
-        public const string Section = "AnnouncementsServer";
-
         private string? _resolvedListenIp;
+
+        public const string Section = "AnnouncementsServer";
 
         public bool Enabled { get; set; } = true;
 

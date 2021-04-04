@@ -9,6 +9,8 @@ namespace Impostor.Benchmarks.Data
 {
     public class MessageWriter
     {
+        private static int BufferSize = 64000;
+
         public MessageType SendOption { get; private set; }
 
         private Stack<int> messageStarts = new Stack<int>();
@@ -32,7 +34,7 @@ namespace Impostor.Benchmarks.Data
         {
             if (includeHeader)
             {
-                var output = new byte[this.Length];
+                byte[] output = new byte[this.Length];
                 System.Buffer.BlockCopy(this.Buffer, 0, output, 0, this.Length);
                 return output;
             }
@@ -41,17 +43,17 @@ namespace Impostor.Benchmarks.Data
                 switch (this.SendOption)
                 {
                     case MessageType.Reliable:
-                    {
-                        var output = new byte[this.Length - 3];
-                        System.Buffer.BlockCopy(this.Buffer, 3, output, 0, this.Length - 3);
-                        return output;
-                    }
+                        {
+                            byte[] output = new byte[this.Length - 3];
+                            System.Buffer.BlockCopy(this.Buffer, 3, output, 0, this.Length - 3);
+                            return output;
+                        }
                     case MessageType.Unreliable:
-                    {
-                        var output = new byte[this.Length - 1];
-                        System.Buffer.BlockCopy(this.Buffer, 1, output, 0, this.Length - 1);
-                        return output;
-                    }
+                        {
+                            byte[] output = new byte[this.Length - 1];
+                            System.Buffer.BlockCopy(this.Buffer, 1, output, 0, this.Length - 1);
+                            return output;
+                        }
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -87,7 +89,7 @@ namespace Impostor.Benchmarks.Data
         public void EndMessage()
         {
             var lastMessageStart = messageStarts.Pop();
-            var length = (ushort)(this.Position - lastMessageStart - 3); // Minus length and type byte
+            ushort length = (ushort)(this.Position - lastMessageStart - 3); // Minus length and type byte
             this.Buffer[lastMessageStart] = (byte)length;
             this.Buffer[lastMessageStart + 1] = (byte)(length >> 8);
         }
@@ -173,7 +175,7 @@ namespace Impostor.Benchmarks.Data
         {
             fixed (byte* ptr = &this.Buffer[this.Position])
             {
-                var valuePtr = (byte*)&value;
+                byte* valuePtr = (byte*)&value;
 
                 *ptr = *valuePtr;
                 *(ptr + 1) = *(valuePtr + 1);
@@ -260,7 +262,7 @@ namespace Impostor.Benchmarks.Data
         {
             do
             {
-                var b = (byte)(value & 0xFF);
+                byte b = (byte)(value & 0xFF);
                 if (value >= 0x80)
                 {
                     b |= 0x80;
@@ -275,7 +277,7 @@ namespace Impostor.Benchmarks.Data
 
         public void Write(MessageWriter msg, bool includeHeader)
         {
-            var offset = 0;
+            int offset = 0;
             if (!includeHeader)
             {
                 switch (msg.SendOption)
@@ -298,8 +300,8 @@ namespace Impostor.Benchmarks.Data
             byte b;
             unsafe
             {
-                var i = 1;
-                var bp = (byte*)&i;
+                int i = 1;
+                byte* bp = (byte*)&i;
                 b = *bp;
             }
 

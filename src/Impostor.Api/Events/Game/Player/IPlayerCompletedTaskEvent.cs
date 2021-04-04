@@ -1,4 +1,5 @@
-﻿using Impostor.Api.Net.Inner.Objects;
+﻿using Impostor.Api.Innersloth;
+using Impostor.Api.Net.Inner.Objects;
 
 namespace Impostor.Api.Events.Player
 {

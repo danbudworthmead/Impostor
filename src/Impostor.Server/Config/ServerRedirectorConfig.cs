@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Impostor.Server.Config
 {
@@ -11,16 +10,14 @@ namespace Impostor.Server.Config
 
         public bool Master { get; set; }
 
-        public NodeLocator? Locator { get; set; }
+        public NodeLocator Locator { get; set; }
 
-        public List<ServerRedirectorNode>? Nodes { get; set; }
+        public List<ServerRedirectorNode> Nodes { get; set; }
 
         public class NodeLocator
         {
-            [AllowNull]
             public string Redis { get; set; }
 
-            [AllowNull]
             public string UdpMasterEndpoint { get; set; }
         }
     }

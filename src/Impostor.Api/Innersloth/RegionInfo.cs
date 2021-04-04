@@ -13,10 +13,21 @@ namespace Impostor.Api.Innersloth
         }
 
         public string Name { get; }
-
         public string Ping { get; }
-
         public IReadOnlyList<ServerInfo> Servers { get; }
+
+        public void Serialize(BinaryWriter writer)
+        {
+            writer.Write(0);
+            writer.Write(Name);
+            writer.Write(Ping);
+            writer.Write(Servers.Count);
+
+            foreach (var server in Servers)
+            {
+                server.Serialize(writer);
+            }
+        }
 
         public static RegionInfo Deserialize(BinaryReader reader)
         {
@@ -32,19 +43,6 @@ namespace Impostor.Api.Innersloth
             }
 
             return new RegionInfo(name, ping, servers);
-        }
-
-        public void Serialize(BinaryWriter writer)
-        {
-            writer.Write(0);
-            writer.Write(Name);
-            writer.Write(Ping);
-            writer.Write(Servers.Count);
-
-            foreach (var server in Servers)
-            {
-                server.Serialize(writer);
-            }
         }
     }
 }

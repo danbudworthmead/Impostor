@@ -10,6 +10,7 @@ using Impostor.Server.Config;
 using Impostor.Server.Net.Hazel;
 using Impostor.Server.Net.Manager;
 using Serilog;
+using ILogger = Serilog.ILogger;
 
 namespace Impostor.Server.Net.Redirector
 {
@@ -23,13 +24,12 @@ namespace Impostor.Server.Net.Redirector
 
         public ClientRedirector(
             string name,
-            int gameVersion,
             HazelConnection connection,
             ISet<Mod> mods,
             ClientManager clientManager,
             INodeProvider nodeProvider,
             INodeLocator nodeLocator)
-            : base(name, gameVersion, connection, mods)
+            : base(name, connection, mods)
         {
             _clientManager = clientManager;
             _nodeProvider = nodeProvider;

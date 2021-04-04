@@ -47,7 +47,7 @@ namespace Impostor.Server.Plugins
 
                 // Some plugins may be referencing another Impostor.Api version and try to load it.
                 // We want to only use the one shipped with the server.
-                if (name.Name == "Impostor.Api")
+                if (name.Name.Equals("Impostor.Api"))
                 {
                     return typeof(IPlugin).Assembly;
                 }
@@ -104,18 +104,18 @@ namespace Impostor.Server.Plugins
                     plugin.First()));
             }
 
-            foreach (var plugin in plugins)
+            foreach (var plugin in plugins.Where(plugin => plugin.Startup != null))
             {
-                plugin.Startup?.ConfigureHost(builder);
+                plugin.Startup.ConfigureHost(builder);
             }
 
             builder.ConfigureServices(services =>
             {
                 services.AddHostedService(provider => ActivatorUtilities.CreateInstance<PluginLoaderService>(provider, plugins));
 
-                foreach (var plugin in plugins)
+                foreach (var plugin in plugins.Where(plugin => plugin.Startup != null))
                 {
-                    plugin.Startup?.ConfigureServices(services);
+                    plugin.Startup.ConfigureServices(services);
                 }
             });
 

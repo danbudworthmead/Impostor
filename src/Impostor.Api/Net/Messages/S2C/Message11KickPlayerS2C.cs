@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Impostor.Api.Net.Messages.S2C
+﻿namespace Impostor.Api.Net.Messages.S2C
 {
     public class Message11KickPlayerS2C
     {
@@ -20,7 +18,7 @@ namespace Impostor.Api.Net.Messages.S2C
 
         public static void Deserialize(IMessageReader reader)
         {
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
     }
 }

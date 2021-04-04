@@ -3,7 +3,7 @@
     public interface IEventCancelable : IEvent
     {
         /// <summary>
-        ///     Gets or sets a value indicating whether the event was cancelled.
+        ///     True if the event was cancelled.
         /// </summary>
         bool IsCancelled { get; set; }
     }

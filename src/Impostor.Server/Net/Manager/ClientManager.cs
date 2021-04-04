@@ -21,7 +21,7 @@ namespace Impostor.Server.Net.Manager
         private static int MinSupportedVersion { get; } = GameVersion.GetVersion(2021, 3, 25); // 2021.3.31;
         private static int MaxSupportedVersion { get; } = GameVersion.GetVersion(2021, 4, 2); // 2021.4.2;
 
-        private static readonly string ServerBrand = $"Impostor {DotnetUtils.GetVersion()}";
+        private static string ServerBrand { get; } = $"Impostor {DotnetUtils.GetVersion()}";
 
         private readonly ILogger<ClientManager> _logger;
         private readonly ConcurrentDictionary<int, ClientBase> _clients;
