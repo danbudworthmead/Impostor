@@ -73,10 +73,6 @@ namespace Impostor.Server.Net.Inner.Objects
                     }
                 }
             }
-            else
-            {
-                throw new NotImplementedException("This shouldn't happen, according to Among Us disassembly.");
-            }
         }
 
         public override async ValueTask<bool> HandleRpcAsync(ClientPlayer sender, ClientPlayer? target, RpcCalls call, IMessageReader reader)
