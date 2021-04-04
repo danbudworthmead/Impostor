@@ -108,7 +108,17 @@ namespace Impostor.Server.Net.State
                 for (var i = 0; i < _players.Values.Count; i++)
                 {
                     var player = _players.Values.ElementAt(i);
-                    await player.Character!.NetworkTransform.SetPositionAsync(player, MapSpawn.Maps[Options.Map].GetSpawnLocation(i, PlayerCount, true), Vector2.Zero);
+                    var spawnPosition = Vector2.Zero;
+                    try
+                    {
+                        spawnPosition = MapSpawn.Maps[Options.Map].GetSpawnLocation(i, PlayerCount, true);
+                    }
+                    catch
+                    {
+                        _logger.LogError("No spawn position for " + Options.Map + " in MapSpawn.Maps");
+                    }
+
+                    await player.Character!.NetworkTransform.SetPositionAsync(player, spawnPosition, Vector2.Zero);
                 }
 
                 GameState = GameStates.Started;
