@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Impostor.Benchmarks", "Impo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "skeld.net", "..\..\net.skeld.plugins\skeld.net\skeld.net.csproj", "{58CCC01F-3B42-4604-9739-A0C34C3630FF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hazel", "Impostor.Hazel\Hazel\Hazel.csproj", "{08A6AC53-8FBE-4B35-9B62-9DC2B8E81EF0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +129,14 @@ Global
 		{58CCC01F-3B42-4604-9739-A0C34C3630FF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{58CCC01F-3B42-4604-9739-A0C34C3630FF}.Release|x86.ActiveCfg = Release|Any CPU
 		{58CCC01F-3B42-4604-9739-A0C34C3630FF}.Release|x86.Build.0 = Release|Any CPU
+		{08A6AC53-8FBE-4B35-9B62-9DC2B8E81EF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08A6AC53-8FBE-4B35-9B62-9DC2B8E81EF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08A6AC53-8FBE-4B35-9B62-9DC2B8E81EF0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{08A6AC53-8FBE-4B35-9B62-9DC2B8E81EF0}.Debug|x86.Build.0 = Debug|Any CPU
+		{08A6AC53-8FBE-4B35-9B62-9DC2B8E81EF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08A6AC53-8FBE-4B35-9B62-9DC2B8E81EF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08A6AC53-8FBE-4B35-9B62-9DC2B8E81EF0}.Release|x86.ActiveCfg = Release|Any CPU
+		{08A6AC53-8FBE-4B35-9B62-9DC2B8E81EF0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
