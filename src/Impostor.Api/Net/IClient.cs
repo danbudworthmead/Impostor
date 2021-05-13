@@ -26,6 +26,8 @@ namespace Impostor.Api.Net
         /// </remarks>
         string Name { get; }
 
+        QuickChatModes QuickChatMode { get; }
+
         /// <summary>
         ///     Gets the language.
         /// </summary>

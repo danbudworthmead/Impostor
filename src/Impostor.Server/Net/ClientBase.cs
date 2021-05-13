@@ -54,5 +54,7 @@ namespace Impostor.Server.Net
         {
             await Connection.CustomDisconnectAsync(reason, message);
         }
+
+        public QuickChatModes QuickChatMode { get; set; }
     }
 }

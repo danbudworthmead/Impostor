@@ -6,7 +6,13 @@
     "ListenPort": 22023
   },
   "AntiCheat": {
-    "Enabled": true,
-    "BanIpFromGame": true
+    "Enabled": false,
+    "BanIpFromGame": false
+  },
+  "PluginLoader": {
+    "Paths": [
+      "Z:\\GitHub\\skeld.net 2.0\\net.skeld.plugins\\skeld.net\\bin\\Debug\\netstandard2.1"
+    ],
+    "LibraryPaths": []
   }
 }

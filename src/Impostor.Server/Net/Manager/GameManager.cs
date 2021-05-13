@@ -41,6 +41,8 @@ namespace Impostor.Server.Net.Manager
             _compatibilityConfig = compatibilityConfig.Value;
         }
 
+        public IPEndPoint PublicIp => _publicIp;
+
         IEnumerable<IGame> IGameManager.Games => _games.Select(kv => kv.Value);
 
         IGame? IGameManager.Find(GameCode code) => Find(code);
