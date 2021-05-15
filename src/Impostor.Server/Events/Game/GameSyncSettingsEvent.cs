@@ -3,7 +3,7 @@ using Impostor.Api.Games;
 
 namespace Impostor.Server.Events
 {
-    public class GameSyncSettingsEvent : IGameStartingEvent
+    public class GameSyncSettingsEvent : IGameSyncSettingsEvent
     {
         public GameSyncSettingsEvent(IGame game)
         {
