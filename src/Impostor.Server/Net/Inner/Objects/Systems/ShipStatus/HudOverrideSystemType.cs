@@ -4,11 +4,11 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 {
     public class HudOverrideSystemType : ISystemType, IActivatable
     {
-        public bool IsActive { get; private set; }
+        public bool IsActive { get; set; }
 
         public void Serialize(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            writer.Write(IsActive);
         }
 
         public void Deserialize(IMessageReader reader, bool initialState)

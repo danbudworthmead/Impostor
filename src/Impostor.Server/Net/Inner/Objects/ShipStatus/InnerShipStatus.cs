@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Impostor.Api;
+using Impostor.Api.Events.Managers;
 using Impostor.Api.Innersloth;
 using Impostor.Api.Innersloth.Maps;
 using Impostor.Api.Net;
@@ -11,6 +12,8 @@ using Impostor.Api.Net.Custom;
 using Impostor.Api.Net.Inner;
 using Impostor.Api.Net.Inner.Objects.ShipStatus;
 using Impostor.Api.Net.Messages.Rpcs;
+using Impostor.Hazel;
+using Impostor.Server.Events.Player;
 using Impostor.Server.Net.Inner.Objects.Systems;
 using Impostor.Server.Net.Inner.Objects.Systems.ShipStatus;
 using Impostor.Server.Net.State;
@@ -20,10 +23,12 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
     internal abstract class InnerShipStatus : InnerNetObject, IInnerShipStatus
     {
         private readonly Dictionary<SystemTypes, ISystemType> _systems = new Dictionary<SystemTypes, ISystemType>();
+        private IEventManager _eventManager;
 
-        protected InnerShipStatus(ICustomMessageManager<ICustomRpc> customMessageManager, Game game) : base(customMessageManager, game)
+        protected InnerShipStatus(ICustomMessageManager<ICustomRpc> customMessageManager, Game game, IEventManager eventManager) : base(customMessageManager, game)
         {
             Components.Add(this);
+            _eventManager = eventManager;
         }
 
         public abstract IMapData Data { get; }
@@ -68,8 +73,139 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
                 if (_systems.TryGetValue(type, out var value))
                 {
                     value.Deserialize(messageReader, initialState);
+
+                    if (!initialState)
+                    {
+                        var sabotagedEvent = new PlayerSabotagedEvent(Game, type);
+                        await _eventManager.CallAsync(sabotagedEvent);
+                        if (sabotagedEvent.IsCancelled)
+                        {
+                            _ = Task.Delay(100).ContinueWith(t => FixSabotage(type));
+                            reader.RemoveMessage(messageReader);
+                        }
+                    }
                 }
             }
+        }
+
+        private async ValueTask FixSabotage(SystemTypes type)
+        {
+            using var writer = MessageWriter.Get(MessageType.Reliable);
+            writer.StartMessage(MessageFlags.GameData);
+            writer.Write(Game.Code);
+            writer.StartMessage(GameDataTag.DataFlag);
+            writer.WritePacked(Game.GameNet.ShipStatus.NetId);
+
+            writer.StartMessage((byte)type);
+            switch (type)
+            {
+                case SystemTypes.Comms:
+                {
+                    switch (Game.Options.Map)
+                    {
+                        case MapTypes.Skeld:
+                        case MapTypes.Polus:
+                        {
+                            var hudSystem = _systems[SystemTypes.Comms] as HudOverrideSystemType;
+                            hudSystem.IsActive = false;
+                            hudSystem.Serialize(writer, false);
+                            break;
+                        }
+
+                        case MapTypes.MiraHQ:
+                        {
+                            var hqHudSystem = _systems[SystemTypes.Comms] as HqHudSystemType;
+                            hqHudSystem.IsActive = false;
+                            hqHudSystem.OpenConsoles.Clear();
+                            hqHudSystem.OpenConsoles.Add(new Tuple<byte, byte>(0, 0));
+                            hqHudSystem.OpenConsoles.Add(new Tuple<byte, byte>(1, 1));
+                            hqHudSystem.CompletedConsoles.Clear();
+                            hqHudSystem.CompletedConsoles.Add(0);
+                            hqHudSystem.CompletedConsoles.Add(1);
+                            hqHudSystem.Serialize(writer, false);
+                            break;
+                        }
+                    }
+
+                    break;
+                }
+
+                case SystemTypes.Electrical:
+                {
+                    var switchSystem = _systems[SystemTypes.Electrical] as SwitchSystem;
+                    switchSystem.ActualSwitches = switchSystem.ExpectedSwitches;
+                    switchSystem.Value = byte.MaxValue;
+                    switchSystem.Serialize(writer, false);
+                    break;
+                }
+
+                case SystemTypes.Laboratory:
+                {
+                    var reactorSystem = _systems[SystemTypes.Laboratory] as ReactorSystemType;
+                    reactorSystem.Countdown = 10000f;
+                    reactorSystem.UserConsolePairs.Clear();
+                    reactorSystem.UserConsolePairs.Add(new Tuple<byte, byte>(0, 0));
+                    reactorSystem.UserConsolePairs.Add(new Tuple<byte, byte>(1, 1));
+                    reactorSystem.Serialize(writer, false);
+                    break;
+                }
+
+                case SystemTypes.Reactor:
+                {
+                    if (Game.Options.Map == MapTypes.Airship)
+                    {
+                        var heliSystemType = _systems[SystemTypes.Reactor] as HeliSabotageSystemType;
+                        if (!heliSystemType.IsActive)
+                            return;
+                        heliSystemType.Countdown = 10000f;
+                        heliSystemType.Timer = 10f;
+                        heliSystemType.ActiveConsoles.Clear();
+                        heliSystemType.ActiveConsoles.Add(new Tuple<byte, byte>(0, 0));
+                        heliSystemType.ActiveConsoles.Add(new Tuple<byte, byte>(1, 1));
+                        heliSystemType.CompletedConsoles.Clear();
+                        heliSystemType.CompletedConsoles.Add(0);
+                        heliSystemType.CompletedConsoles.Add(1);
+                        heliSystemType.Serialize(writer, false);
+                        break;
+                    }
+
+                    var reactorSystem = _systems[SystemTypes.Reactor] as ReactorSystemType;
+                    reactorSystem.Countdown = 10000f;
+                    reactorSystem.UserConsolePairs.Clear();
+                    reactorSystem.UserConsolePairs.Add(new Tuple<byte, byte>(0, 0));
+                    reactorSystem.UserConsolePairs.Add(new Tuple<byte, byte>(1, 1));
+                    reactorSystem.Serialize(writer, false);
+                    break;
+                }
+
+                case SystemTypes.LifeSupp:
+                {
+                    var o2System = _systems[SystemTypes.LifeSupp] as LifeSuppSystemType;
+                    o2System.Countdown = 10000f;
+                    o2System.CompletedConsoles.Clear();
+                    o2System.CompletedConsoles.Add(0);
+                    o2System.CompletedConsoles.Add(1);
+                    o2System.Serialize(writer, false);
+                    break;
+                }
+
+                case SystemTypes.Sabotage:
+                {
+                    // ignore
+                    return;
+                }
+
+                default:
+                {
+                    return; // don't send the empty message
+                }
+            }
+
+            writer.EndMessage();
+            writer.EndMessage();
+            writer.EndMessage();
+
+            await Game.SendToAsync(writer, Game.HostId);
         }
 
         public override async ValueTask<bool> HandleRpcAsync(ClientPlayer sender, ClientPlayer? target, RpcCalls call, IMessageReader reader)

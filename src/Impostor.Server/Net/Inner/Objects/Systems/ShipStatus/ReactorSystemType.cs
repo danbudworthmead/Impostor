@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using Impostor.Api.Net.Messages;
 
 namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 {
@@ -11,7 +13,7 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
             UserConsolePairs = new HashSet<Tuple<byte, byte>>();
         }
 
-        public float Countdown { get; private set; }
+        public float Countdown { get; set; }
 
         public HashSet<Tuple<byte, byte>> UserConsolePairs { get; }
 
@@ -19,7 +21,12 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 
         public void Serialize(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            writer.Write(Countdown);
+            writer.WritePacked(UserConsolePairs.Count);
+            writer.Write(UserConsolePairs.First().Item1);
+            writer.Write(UserConsolePairs.First().Item2);
+            writer.Write(UserConsolePairs.Last().Item1);
+            writer.Write(UserConsolePairs.Last().Item2);
         }
 
         public void Deserialize(IMessageReader reader, bool initialState)

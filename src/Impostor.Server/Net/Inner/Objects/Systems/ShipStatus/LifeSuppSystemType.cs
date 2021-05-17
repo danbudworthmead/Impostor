@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using Impostor.Api.Net.Messages;
 
 namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 {
@@ -11,7 +13,7 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
             CompletedConsoles = new HashSet<int>();
         }
 
-        public float Countdown { get; private set; }
+        public float Countdown { get; set; }
 
         public HashSet<int> CompletedConsoles { get; }
 
@@ -19,7 +21,12 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 
         public void Serialize(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            writer.Write(Countdown);
+            writer.WritePacked(CompletedConsoles.Count());
+            foreach (var completedConsole in CompletedConsoles)
+            {
+                writer.WritePacked(completedConsole);
+            }
         }
 
         public void Deserialize(IMessageReader reader, bool initialState)
@@ -37,7 +44,8 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 
             for (var i = 0; i < num; i++)
             {
-                CompletedConsoles.Add(reader.ReadPackedInt32());
+                var val = reader.ReadPackedInt32();
+                CompletedConsoles.Add(val);
             }
         }
     }
