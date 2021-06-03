@@ -10,6 +10,7 @@ using Impostor.Api.Innersloth.Maps;
 using Impostor.Api.Net;
 using Impostor.Api.Net.Custom;
 using Impostor.Api.Net.Inner;
+using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Net.Inner.Objects.ShipStatus;
 using Impostor.Api.Net.Messages.Rpcs;
 using Impostor.Hazel;
@@ -253,7 +254,7 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
             return true;
         }
 
-        public virtual Vector2 GetSpawnLocation(InnerPlayerControl player, int numPlayers, bool initialSpawn)
+        public virtual Vector2 GetSpawnLocation(IInnerPlayerControl player, int numPlayers, bool initialSpawn)
         {
             var vector = new Vector2(0, 1);
             vector = Rotate(vector, (player.PlayerId - 1) * (360f / numPlayers));

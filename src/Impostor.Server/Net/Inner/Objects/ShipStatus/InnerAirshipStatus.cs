@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Impostor.Api.Events.Managers;
 using Impostor.Api.Innersloth;
 using Impostor.Api.Innersloth.Maps;
 using Impostor.Api.Net.Custom;
+using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Net.Inner.Objects.ShipStatus;
 using Impostor.Server.Net.Inner.Objects.Systems;
 using Impostor.Server.Net.Inner.Objects.Systems.ShipStatus;
@@ -40,9 +42,9 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
             new Vector2(33.5f, -1.5f), // CargoBay
         };
 
-        public override Vector2 GetSpawnLocation(InnerPlayerControl player, int numPlayers, bool initialSpawn)
+        public override Vector2 GetSpawnLocation(IInnerPlayerControl player, int numPlayers, bool initialSpawn)
         {
-            return new Vector2(-25, 40);
+            return SpawnLocations[player.PlayerId % SpawnLocations.Length];
         }
 
         protected override void AddSystems(Dictionary<SystemTypes, ISystemType> systems)

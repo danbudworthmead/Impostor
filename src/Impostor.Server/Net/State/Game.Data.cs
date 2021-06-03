@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Impostor.Api;
-using Impostor.Api.Innersloth;
 using Impostor.Api.Net.Inner;
 using Impostor.Api.Unity;
 using Impostor.Server.Events.Meeting;
@@ -45,9 +45,9 @@ namespace Impostor.Server.Net.State
             typeof(InnerNormalGameManager),
         };
 
-        private readonly List<InnerNetObject> _allObjects = new List<InnerNetObject>();
+        private readonly ConcurrentBag<InnerNetObject> _allObjects = new ConcurrentBag<InnerNetObject>();
 
-        private readonly Dictionary<uint, InnerNetObject> _allObjectsFast = new Dictionary<uint, InnerNetObject>();
+        private readonly ConcurrentDictionary<uint, InnerNetObject> _allObjectsFast = new ConcurrentDictionary<uint, InnerNetObject>();
 
         public T? FindObjectByNetId<T>(uint netId)
             where T : IInnerNetObject
@@ -427,20 +427,22 @@ namespace Impostor.Server.Net.State
                 return false;
             }
 
-            _allObjects.Add(obj);
-            _allObjectsFast.Add(obj.NetId, obj);
+            // _allObjects.Add(obj);
+            _allObjectsFast.TryAdd(obj.NetId, obj);
             return true;
         }
 
         private void RemoveNetObject(InnerNetObject obj)
         {
-            var index = _allObjects.IndexOf(obj);
-            if (index > -1)
-            {
-                _allObjects.RemoveAt(index);
-            }
+            // var index = _allObjects.IndexOf(obj);
+            // if (index > -1)
+            // {
+            //     _allObjects.RemoveAt(index);
+            // }
 
-            _allObjectsFast.Remove(obj.NetId);
+            _allObjectsFast.Remove(obj.NetId, out _);
+
+            obj.NetId = uint.MaxValue;
         }
     }
 }

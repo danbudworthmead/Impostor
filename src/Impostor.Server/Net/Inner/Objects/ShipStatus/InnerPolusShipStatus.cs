@@ -4,6 +4,7 @@ using Impostor.Api.Events.Managers;
 using Impostor.Api.Innersloth;
 using Impostor.Api.Innersloth.Maps;
 using Impostor.Api.Net.Custom;
+using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Net.Inner.Objects.ShipStatus;
 using Impostor.Server.Net.Inner.Objects.Systems;
 using Impostor.Server.Net.Inner.Objects.Systems.ShipStatus;
@@ -29,7 +30,7 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
 
         public Vector2 MeetingSpawnCenter2 { get; } = new Vector2(17.4f, -17.515f);
 
-        public override Vector2 GetSpawnLocation(InnerPlayerControl player, int numPlayers, bool initialSpawn)
+        public override Vector2 GetSpawnLocation(IInnerPlayerControl player, int numPlayers, bool initialSpawn)
         {
             if (initialSpawn)
             {
