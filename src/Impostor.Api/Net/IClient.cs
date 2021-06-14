@@ -9,6 +9,8 @@ namespace Impostor.Api.Net
     /// </summary>
     public interface IClient
     {
+        public int GameVersion { get; }
+
         /// <summary>
         ///     Gets or sets the unique ID of the client.
         /// </summary>
