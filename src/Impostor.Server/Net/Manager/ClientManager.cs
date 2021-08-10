@@ -144,13 +144,13 @@ namespace Impostor.Server.Net.Manager
                 return VersionCompareResult.ClientTooOld;
             }
 
-            if (clientVersion > SupportedVersions.Last())
-            {
-                return VersionCompareResult.ServerTooOld;
-            }
+            // if (clientVersion > SupportedVersions.Last())
+            // {
+            //     return VersionCompareResult.ServerTooOld;
+            // }
 
             // This may happen in the very rare case that version X is supported, X+2 is as well, but X+1 is not.
-            return VersionCompareResult.Unknown;
+            return VersionCompareResult.Compatible;
         }
     }
 }

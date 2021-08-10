@@ -105,7 +105,14 @@ namespace Impostor.Server.Net.Inner.Objects
 
             for (var i = 0; i < taskCount; i++)
             {
-                Tasks[i].Deserialize(reader);
+                try
+                {
+                    Tasks[i].Deserialize(reader);
+                }
+                catch
+                {
+                    // ignored
+                }
             }
         }
     }

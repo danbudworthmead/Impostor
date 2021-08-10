@@ -11,8 +11,7 @@
   },
   "PluginLoader": {
     "Paths": [
-      "Z:\\GitHub\\skeld.net 2.0\\net.skeld.plugins\\skeld.net\\bin\\Debug\\netstandard2.1",
-      "Z:\\GitHub\\Boot.Handshake\\Boot.Handshake\\bin\\Debug\\net5.0"
+      "Z:\\GitHub\\skeld.net 2.0\\net.skeld.plugins\\skeld.net\\bin\\Debug\\netstandard2.1"
     ],
     "LibraryPaths": []
   }
