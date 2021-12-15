@@ -6,6 +6,8 @@
     <Version>1.0.0</Version>
     <AssemblyTitle>Debugger</AssemblyTitle>
     <Authors>Gerard</Authors>
+    <Configurations>Debug;Release</Configurations>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
 
   <ItemGroup>

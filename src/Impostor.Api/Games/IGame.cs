@@ -16,7 +16,7 @@ namespace Impostor.Api.Games
 
         GameCode Code { get; }
 
-        GameStates GameState { get; }
+        GameStates GameState { get; set; }
 
         IGameNet GameNet { get; }
 

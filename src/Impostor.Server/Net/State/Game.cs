@@ -72,7 +72,7 @@ namespace Impostor.Server.Net.State
 
         public int HostId { get; private set; }
 
-        public GameStates GameState { get; private set; }
+        public GameStates GameState { get; set; }
 
         public IGameOptions Options { get; }
 
