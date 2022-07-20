@@ -59,13 +59,13 @@ namespace Impostor.Server.Net.Manager
 
             // Find games that have not started yet.
             foreach (var (_, game) in _games.Where(x =>
-                x.Value.IsPublic &&
+                // x.Value.IsPublic &&
                 x.Value.GameState == GameStates.NotStarted &&
                 x.Value.PlayerCount < x.Value.Options.MaxPlayers &&
                 (_compatibilityConfig.AllowVersionMixing || x.Value.Host == null || x.Value.Host.Client.GameVersion == gameVersion)))
             {
                 // Check for options.
-                if (!map.HasFlag((MapFlags)(1 << (byte)game.Options.Map)))
+                /* if (!map.HasFlag((MapFlags)(1 << (byte)game.Options.Map)))
                 {
                     continue;
                 }
@@ -78,7 +78,7 @@ namespace Impostor.Server.Net.Manager
                 if (impostorCount != 0 && game.Options.NumImpostors != impostorCount)
                 {
                     continue;
-                }
+                } */
 
                 if (!game.FilterOptions.FilterTags.SetEquals(filterTags))
                 {

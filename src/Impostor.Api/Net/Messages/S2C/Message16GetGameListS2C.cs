@@ -32,7 +32,28 @@ namespace Impostor.Api.Net.Messages.S2C
                 writer.EndMessage();
             }
 
+            // WriteLine(writer, "Visit");
+            // WriteLine(writer, "www.skeld.net/codes");
+            // WriteLine(writer, "to join games");
+
             writer.EndMessage();
+            writer.EndMessage();
+        }
+
+        public static void WriteLine(IMessageWriter writer, string text)
+        {
+            writer.StartMessage(0);
+            writer.Write(0);
+            writer.Write((ushort)0);
+            writer.Write(0);
+            writer.Write($"<size=70%><color=orange>{text}");
+            writer.Write((byte)0);
+            writer.WritePacked(1); // TODO: What does Age do?
+            writer.Write((byte)0);
+            writer.Write((byte)0);
+            writer.Write((byte)0);
+            writer.Write((byte)0);
+            writer.Write(string.Empty);
             writer.EndMessage();
         }
 

@@ -14,7 +14,7 @@ namespace Impostor.Api.Games
         public GameCode(string code)
         {
             Value = GameCodeParser.GameNameToInt(code);
-            Code = code.ToUpperInvariant();
+            Code = code?.ToUpperInvariant();
         }
 
         public string Code { get; }

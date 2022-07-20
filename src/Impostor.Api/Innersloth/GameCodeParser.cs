@@ -32,6 +32,8 @@ namespace Impostor.Api.Innersloth
 
         public static int GameNameToInt(string code)
         {
+            if (code == null) return 0;
+
             var upper = code.ToUpperInvariant();
             if (upper.Any(x => !char.IsLetter(x)))
             {
