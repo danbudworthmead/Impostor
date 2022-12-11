@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Impostor.Api.Innersloth
 {
     public static class GameVersion
@@ -15,6 +17,12 @@ namespace Impostor.Api.Innersloth
             version %= 1800;
             day = version / 50;
             revision = version % 50;
+        }
+
+        public static string ParseVersion(int version)
+        {
+            ParseVersion(version, out var year, out var month, out var day, out var revision);
+            return $"{year}.{month}.{day}";
         }
     }
 }
