@@ -12,6 +12,7 @@ using Impostor.Api.Net.Custom;
 using Impostor.Api.Net.Inner;
 using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Net.Inner.Objects.ShipStatus;
+using Impostor.Api.Net.Messages;
 using Impostor.Api.Net.Messages.Rpcs;
 using Impostor.Hazel;
 using Impostor.Server.Events.Player;
@@ -93,7 +94,7 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
         {
             using var writer = MessageWriter.Get(MessageType.Reliable);
             writer.StartMessage(MessageFlags.GameData);
-            writer.Write(Game.Code);
+            Game.Code.Serialize(writer);
             writer.StartMessage(GameDataTag.DataFlag);
             writer.WritePacked(Game.GameNet.ShipStatus.NetId);
 

@@ -22,13 +22,13 @@ namespace Impostor.Api.Net.Messages.S2C
                 writer.Write(game.DisplayName ?? game.Host?.Client.Name ?? string.Empty);
                 writer.Write((byte)game.PlayerCount);
                 writer.WritePacked(1); // TODO: What does Age do?
-                writer.Write((byte)game.Options.CurrentGameOptions.Map);
-                writer.Write((byte)game.Options.CurrentGameOptions.NumImpostors);
-                writer.Write((byte)game.Options.CurrentGameOptions.MaxPlayers);
+                writer.Write((byte)game.Options.Map);
+                writer.Write((byte)game.Options.NumImpostors);
+                writer.Write((byte)game.Options.MaxPlayers);
                 var platform = game.Host?.Client.PlatformSpecificData;
                 writer.Write((byte)(platform?.Platform ?? 0));
                 writer.Write(platform?.PlatformName ?? string.Empty);
-                writer.Write((uint)game.Options.CurrentGameOptions.Keywords);
+                writer.Write((uint)game.Options.Keywords);
                 writer.EndMessage();
             }
 
