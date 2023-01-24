@@ -11,7 +11,7 @@
   },
   "PluginLoader": {
     "Paths": [
-      "G:\\GitHub\\skeld.net 2.0\\Impostor\\src\\Impostor.Server\\bin\\Debug\\net6.0\\plugins\\net6.0"
+      "G:\\GitHub\\skeld.net 2.0\\Impostor\\src\\Impostor.Server\\bin\\Debug\\net7.0\\plugins\\net7.0"
     ],
     "LibraryPaths": ["C:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App\\6.0.10"]
   }
