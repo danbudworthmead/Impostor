@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Numerics;
-using Impostor.Api.Events.Managers;
 using Impostor.Api.Innersloth;
 using Impostor.Api.Net.Custom;
 using Impostor.Api.Net.Inner.Objects.ShipStatus;
@@ -12,7 +11,7 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
 {
     internal class InnerPolusShipStatus : InnerShipStatus, IInnerPolusShipStatus
     {
-        public InnerPolusShipStatus(ICustomMessageManager<ICustomRpc> customMessageManager, Game game, IEventManager eventManager) : base(customMessageManager, game, MapTypes.Polus, eventManager)
+        public InnerPolusShipStatus(ICustomMessageManager<ICustomRpc> customMessageManager, Game game) : base(customMessageManager, game, MapTypes.Polus)
         {
         }
 

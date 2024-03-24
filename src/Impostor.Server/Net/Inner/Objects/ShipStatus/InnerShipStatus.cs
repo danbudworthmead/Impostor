@@ -4,7 +4,6 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Impostor.Api;
-using Impostor.Api.Events.Managers;
 using Impostor.Api.Innersloth;
 using Impostor.Api.Innersloth.Maps;
 using Impostor.Api.Net;
@@ -12,7 +11,6 @@ using Impostor.Api.Net.Custom;
 using Impostor.Api.Net.Inner;
 using Impostor.Api.Net.Inner.Objects.ShipStatus;
 using Impostor.Api.Net.Messages.Rpcs;
-using Impostor.Server.Events.Player;
 using Impostor.Server.Net.Inner.Objects.Systems;
 using Impostor.Server.Net.Inner.Objects.Systems.ShipStatus;
 using Impostor.Server.Net.State;
@@ -22,12 +20,9 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
     internal abstract class InnerShipStatus : InnerNetObject, IInnerShipStatus
     {
         private readonly Dictionary<SystemTypes, ISystemType> _systems = new Dictionary<SystemTypes, ISystemType>();
-        private readonly IEventManager _eventManager;
 
-        protected InnerShipStatus(ICustomMessageManager<ICustomRpc> customMessageManager, Game game, MapTypes mapType, IEventManager eventManager) : base(customMessageManager, game)
+        protected InnerShipStatus(ICustomMessageManager<ICustomRpc> customMessageManager, Game game, MapTypes mapType) : base(customMessageManager, game)
         {
-            _eventManager = eventManager;
-
             Components.Add(this);
 
             MapType = mapType;
@@ -90,20 +85,6 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
                 {
                     if (!await ValidateImpostor(call, sender, sender.Character!.PlayerInfo))
                     {
-                        return false;
-                    }
-
-
-                    var evt = new PlayerSabotagedEvent(Game, sender, sender.Character, false, SystemTypes.Doors);
-                    await _eventManager.CallAsync(evt);
-
-                    if (evt.IsCancelled)
-                    {
-                        if (sender.IsHost)
-                        {
-                            // we need to send the fix door rpc
-                        }
-
                         return false;
                     }
 

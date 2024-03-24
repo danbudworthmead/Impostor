@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Impostor.Api.Events.Managers;
 using Impostor.Api.Innersloth;
 using Impostor.Api.Net.Custom;
 using Impostor.Server.Net.Inner.Objects.Systems;
@@ -10,7 +9,7 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
 {
     internal class InnerFungleShipStatus : InnerShipStatus
     {
-        public InnerFungleShipStatus(ICustomMessageManager<ICustomRpc> customMessageManager, Game game, IEventManager eventManager) : base(customMessageManager, game, MapTypes.Fungle, eventManager)
+        public InnerFungleShipStatus(ICustomMessageManager<ICustomRpc> customMessageManager, Game game) : base(customMessageManager, game, MapTypes.Fungle)
         {
         }
 
