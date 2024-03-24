@@ -13,5 +13,13 @@
   "AntiCheat": {
     "Enabled": true,
     "BanIpFromGame": true
+  },
+  "PluginLoader": {
+    "Paths": [
+      "G:\\GitHub\\skeld.net 2.0\\net.skeld.plugins\\skeld.net\\bin\\Debug\\net8.0"
+    ],
+    "LibraryPaths": [
+      "C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.1"
+    ]
   }
 }
