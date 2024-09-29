@@ -43,5 +43,7 @@ namespace Impostor.Api.Net.Inner.Objects
         DateTimeOffset LastMurder { get; }
 
         uint PlayerLevel { get; }
+
+        byte GetNextRpcSequenceId(RpcCalls rpc);
     }
 }
