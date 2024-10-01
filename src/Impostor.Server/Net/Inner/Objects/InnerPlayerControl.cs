@@ -372,6 +372,8 @@ namespace Impostor.Server.Net.Inner.Objects
                     }
 
                     // TODO: deserialize and expose the result in an API
+                    Rpc33SendQuickChat.Deserialize(reader, out var message);
+                    await _eventManager.CallAsync(new PlayerChatEvent(Game, sender, this, message));
                     break;
                 }
 
