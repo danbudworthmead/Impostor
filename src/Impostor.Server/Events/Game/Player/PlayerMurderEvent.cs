@@ -1,3 +1,4 @@
+using Impostor.Api.Events;
 using Impostor.Api.Events.Player;
 using Impostor.Api.Games;
 using Impostor.Api.Innersloth;
@@ -26,5 +27,7 @@ namespace Impostor.Server.Events.Player
         public IInnerPlayerControl Victim { get; }
 
         public MurderResultFlags Result { get; }
+
+        public bool IsCancelled { get; set; }
     }
 }

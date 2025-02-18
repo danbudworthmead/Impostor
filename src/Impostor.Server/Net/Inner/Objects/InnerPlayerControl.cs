@@ -1019,7 +1019,12 @@ namespace Impostor.Server.Net.Inner.Objects
                     target.ProtectedOn = null;
                 }
 
-                await _eventManager.CallAsync(new PlayerMurderEvent(Game, sender, this, target, result));
+                var @event = new PlayerMurderEvent(Game, sender, this, target, result);
+                await _eventManager.CallAsync(@event);
+                if (@event.IsCancelled)
+                {
+                    return false;
+                }
             }
 
             IsMurdering = null;

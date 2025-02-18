@@ -12,7 +12,7 @@ namespace Impostor.Api.Events.Player
     /// If you want to cancel this kill, listen to <see cref="IPlayerCheckMurderEvent"/>.
     /// If you want to know about players that were voted out, listed to <see cref="IPlayerExileEvent"/>.
     /// </remarks>
-    public interface IPlayerMurderEvent : IPlayerEvent
+    public interface IPlayerMurderEvent : IPlayerEvent, IEventCancelable
     {
         /// <summary>
         ///     Gets the player who got murdered.

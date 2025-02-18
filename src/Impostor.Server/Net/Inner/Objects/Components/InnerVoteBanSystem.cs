@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Impostor.Api;
+using Impostor.Api.Events.Managers;
 using Impostor.Api.Net;
 using Impostor.Api.Net.Custom;
 using Impostor.Api.Net.Inner;
 using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Net.Messages.Rpcs;
+using Impostor.Server.Events.Client;
 using Impostor.Server.Net.State;
 using Microsoft.Extensions.Logging;
 
@@ -16,10 +18,12 @@ namespace Impostor.Server.Net.Inner.Objects.Components
     {
         private readonly ILogger<InnerVoteBanSystem> _logger;
         private readonly Dictionary<int, int[]> _votes;
+        private readonly IEventManager _eventManager;
 
-        public InnerVoteBanSystem(ICustomMessageManager<ICustomRpc> customMessageManager, Game game, ILogger<InnerVoteBanSystem> logger) : base(customMessageManager, game)
+        public InnerVoteBanSystem(ICustomMessageManager<ICustomRpc> customMessageManager, Game game, ILogger<InnerVoteBanSystem> logger, IEventManager eventManager) : base(customMessageManager, game)
         {
             _logger = logger;
+            _eventManager = eventManager;
             _votes = new Dictionary<int, int[]>();
             Components.Add(this);
         }
@@ -67,6 +71,8 @@ namespace Impostor.Server.Net.Inner.Objects.Components
             if (call == RpcCalls.AddVote)
             {
                 Rpc26AddVote.Deserialize(reader, out var clientId, out var targetClientId);
+
+                await _eventManager.CallAsync(new ClientAddVoteEvent(sender.Client, clientId, targetClientId, sender.Client.Connection));
 
                 if (clientId != sender.Client.Id)
                 {
