@@ -31,6 +31,7 @@ namespace Impostor.Server.Net.Manager
         private readonly IEventManager _eventManager;
         private readonly IGameCodeFactory _gameCodeFactory;
         private readonly ICompatibilityManager _compatibilityManager;
+        private readonly ConcurrentDictionary<IClient, Game?> _gamesCreatedBy;
 
         public GameManager(
             ILogger<GameManager> logger,
@@ -49,6 +50,7 @@ namespace Impostor.Server.Net.Manager
             _games = new ConcurrentDictionary<int, Game>();
             _compatibilityConfig = compatibilityConfig.Value;
             _compatibilityManager = compatibilityManager;
+            _gamesCreatedBy = new ConcurrentDictionary<IClient, Game?>();
         }
 
         IEnumerable<IGame> IGameManager.Games => _games.Select(kv => kv.Value);
@@ -85,6 +87,12 @@ namespace Impostor.Server.Net.Manager
 
         public async ValueTask<IGame?> CreateAsync(IClient? owner, IGameOptions options, GameFilterOptions filterOptions)
         {
+            if (owner != null && !_gamesCreatedBy.TryAdd(owner, null))
+            {
+                _logger.LogWarning("Connection {Name}({ClientId}) has tried to create a second game, blocked", owner.Name, owner.Id);
+                return null;
+            }
+
             var @event = new GameCreationEvent(this, owner);
             await _eventManager.CallAsync(@event);
 
@@ -98,6 +106,11 @@ namespace Impostor.Server.Net.Manager
             for (var i = 0; i < 10 && !success; i++)
             {
                 (success, game) = await TryCreateAsync(options, filterOptions, owner);
+            }
+
+            if (owner != null)
+            {
+                _gamesCreatedBy[owner] = game;
             }
 
             if (!success || game == null)
@@ -128,6 +141,15 @@ namespace Impostor.Server.Net.Manager
             await _eventManager.CallAsync(new GameCreatedEvent(game, owner));
 
             return (true, game);
+        }
+
+        internal async ValueTask OnClientDisconnectAsync(IClient client)
+        {
+            if (_gamesCreatedBy.TryRemove(client, out var game) && game is { PlayerCount: 0, GameState: not GameStates.Destroyed })
+            {
+                _logger.LogWarning("Client {Name}({ClientId}) left empty game open when disconnecting", client.Name, client.Id);
+                await RemoveAsync(game.Code);
+            }
         }
     }
 }
