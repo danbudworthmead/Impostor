@@ -205,6 +205,14 @@ namespace Impostor.Server
                 {
                     builder.ConfigureServices(services =>
                     {
+                        services.AddCors(options =>
+                        {
+                            options.AddPolicy(
+                                "AllowSpecificOrigin",
+                                corsPolicyBuilder => corsPolicyBuilder.WithOrigins("https://skeld.net")
+                                    .AllowAnyHeader()
+                                    .AllowAnyMethod());
+                        });
                         services.AddControllers();
                     });
 
@@ -220,6 +228,8 @@ namespace Impostor.Server
                         }
 
                         app.UseRouting();
+
+                        app.UseCors("AllowSpecificOrigin");
 
                         app.UseEndpoints(endpoints =>
                         {
