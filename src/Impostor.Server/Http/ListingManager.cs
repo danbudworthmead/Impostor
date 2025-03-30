@@ -39,7 +39,7 @@ public sealed class ListingManager
     /// <param name="gameVersion">Game version of the client.</param>
     /// <param name="maxListings">Maximum amount of games to return.</param>
     /// <returns>Listings that match the required criteria.</returns>
-    public IEnumerable<IGame> FindListings(HttpContext ctx, int map, int impostorCount, GameKeywords language, GameVersion? gameVersion, int maxListings = 10)
+    public IEnumerable<IGame> FindListings(HttpContext ctx, int? map, int? impostorCount, GameKeywords? language, GameVersion? gameVersion, int maxListings = 10)
     {
         var resultCount = 0;
 
@@ -104,8 +104,13 @@ public sealed class ListingManager
         }
     }
 
-    private static bool IsGameDesired(IGame game, int map, int impostorCount, GameKeywords language)
+    private static bool IsGameDesired(IGame game, int? map, int? impostorCount, GameKeywords? language)
     {
+        if (map == null && impostorCount == null && language == null)
+        {
+            return true;
+        }
+
         if ((map & (1 << (int)game.Options.Map)) == 0)
         {
             return false;

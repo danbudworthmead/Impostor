@@ -39,9 +39,9 @@ public sealed class CodesController : ControllerBase
     /// <param name="authorization">Authorization header containing the matchmaking token.</param>
     /// <returns>An array of game listings.</returns>
     [HttpGet]
-    public IActionResult Index(int mapId, GameKeywords lang, int numImpostors, [FromHeader] AuthenticationHeaderValue authorization)
+    public IActionResult GetCodes()
     {
-        var listings = _listingManager.FindListings(HttpContext, mapId, numImpostors, lang, null);
+        var listings = _listingManager.FindListings(HttpContext, null, null, null, null);
         return Ok(listings.Where(g => g.GameState == GameStates.NotStarted).Select(g => g.Code));
     }
 }
