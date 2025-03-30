@@ -39,7 +39,7 @@ public sealed class ListingManager
     /// <param name="gameVersion">Game version of the client.</param>
     /// <param name="maxListings">Maximum amount of games to return.</param>
     /// <returns>Listings that match the required criteria.</returns>
-    public IEnumerable<IGame> FindListings(HttpContext ctx, int map, int impostorCount, GameKeywords language, GameVersion gameVersion, int maxListings = 10)
+    public IEnumerable<IGame> FindListings(HttpContext ctx, int map, int impostorCount, GameKeywords language, GameVersion? gameVersion, int maxListings = 10)
     {
         var resultCount = 0;
 
@@ -54,14 +54,15 @@ public sealed class ListingManager
         // .Where filters out games that can't be joined.
         foreach (var game in this._gameManager.Games)
         {
-            if (!game.IsPublic || game.GameState != GameStates.NotStarted || game.PlayerCount >= game.Options.MaxPlayers)
+            if (game.GameState != GameStates.NotStarted || game.PlayerCount >= game.Options.MaxPlayers)
             {
                 continue;
             }
 
             if (!_compatibilityConfig.AllowVersionMixing &&
                 game.Host != null &&
-                _compatibilityManager.CanJoinGame(game.Host.Client.GameVersion, gameVersion) != GameJoinError.None)
+                gameVersion != null &&
+                _compatibilityManager.CanJoinGame(game.Host.Client.GameVersion, gameVersion.Value) != GameJoinError.None)
             {
                 continue;
             }
