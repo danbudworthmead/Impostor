@@ -1,4 +1,4 @@
-﻿namespace Impostor.Api.Config
+namespace Impostor.Api.Config
 {
     public class AntiCheatConfig
     {
@@ -13,6 +13,8 @@
         public bool EnableGameFlowChecks { get; set; } = true;
 
         public bool EnableMustBeHostChecks { get; set; } = true;
+
+        public bool EnableInvalidObjectChecks { get; set; } = true;
 
         public bool EnableColorLimitChecks { get; set; } = true;
 
