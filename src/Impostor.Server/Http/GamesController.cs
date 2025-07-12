@@ -118,14 +118,16 @@ public sealed class GamesController : ControllerBase
     [HttpGet("filtered")]
     public IActionResult ShowFilteredLobbies()
     {
+        var listings = _listingManager.FindListings(HttpContext, null, null, null, null).ToList();
+
         // TODO: implement this stub
         var response = new
         {
-            games = Array.Empty<GameListing>(),
+            games = listings.Select(GameListing.From),
             metadata = new
             {
                 allGamesCount = _gameManager.Games.Count(),
-                matchingGamesCount = 0,
+                matchingGamesCount = listings.Count,
             },
         };
 
