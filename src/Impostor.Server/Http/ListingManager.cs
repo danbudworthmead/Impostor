@@ -54,7 +54,9 @@ public sealed class ListingManager
         // .Where filters out games that can't be joined.
         foreach (var game in this._gameManager.Games)
         {
-            if (game.GameState != GameStates.NotStarted || game.PlayerCount >= game.Options.MaxPlayers)
+            if (game.GameState != GameStates.NotStarted
+                || game.PlayerCount >= game.Options.MaxPlayers
+                || game.IsPublic == false)
             {
                 continue;
             }
