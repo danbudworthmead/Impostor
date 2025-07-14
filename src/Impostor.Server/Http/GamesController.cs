@@ -120,7 +120,6 @@ public sealed class GamesController : ControllerBase
     {
         var listings = _listingManager.FindListings(HttpContext, null, null, null, null).ToList();
 
-        // TODO: implement this stub
         var response = new
         {
             games = listings.Select(GameListing.From),
