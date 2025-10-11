@@ -15,13 +15,11 @@ namespace Impostor.Api.Net.Messages.Rpcs
             writer.Write(ventId);
         }
 
-        public static void Deserialize(IMessageReader reader, IGame game, out SystemTypes systemType, out IInnerPlayerControl? playerControl, out ushort sequenceId, out byte state, out byte ventId)
+        public static void Deserialize(IMessageReader reader, IGame game, out SystemTypes systemType, out IInnerPlayerControl? playerControl, out byte state)
         {
             systemType = (SystemTypes)reader.ReadByte();
             playerControl = reader.ReadNetObject<IInnerPlayerControl>(game);
-            sequenceId = reader.ReadUInt16();
             state = reader.ReadByte();
-            ventId = reader.ReadByte();
         }
     }
 }

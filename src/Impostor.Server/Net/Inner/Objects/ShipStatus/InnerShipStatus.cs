@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Impostor.Api;
+using Impostor.Api.Events.Managers;
 using Impostor.Api.Innersloth;
 using Impostor.Api.Innersloth.Maps;
 using Impostor.Api.Net;
@@ -11,6 +12,7 @@ using Impostor.Api.Net.Custom;
 using Impostor.Api.Net.Inner;
 using Impostor.Api.Net.Inner.Objects.ShipStatus;
 using Impostor.Api.Net.Messages.Rpcs;
+using Impostor.Server.Events.Player;
 using Impostor.Server.Net.Inner.Objects.Systems;
 using Impostor.Server.Net.Inner.Objects.Systems.ShipStatus;
 using Impostor.Server.Net.State;
@@ -19,15 +21,17 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
 {
     internal abstract class InnerShipStatus : InnerNetObject, IInnerShipStatus
     {
-        private readonly Dictionary<SystemTypes, ISystemType> _systems = new Dictionary<SystemTypes, ISystemType>();
+        private readonly Dictionary<SystemTypes, ISystemType> _systems = new();
+        private readonly IEventManager _eventManager;
 
-        protected InnerShipStatus(ICustomMessageManager<ICustomRpc> customMessageManager, Game game, MapTypes mapType) : base(customMessageManager, game)
+        protected InnerShipStatus(ICustomMessageManager<ICustomRpc> customMessageManager, Game game, MapTypes mapType, IEventManager eventManager) : base(customMessageManager, game)
         {
             Components.Add(this);
 
             MapType = mapType;
             Data = MapData.Maps[mapType];
             Doors = new Dictionary<int, bool>(Data.Doors.Count);
+            _eventManager = eventManager;
         }
 
         public MapTypes MapType { get; }
@@ -68,6 +72,18 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
                 if (_systems.TryGetValue(type, out var value))
                 {
                     value.Deserialize(messageReader, initialState);
+
+                    var e = new PlayerSabotageEvent(Game, sender, sender.Character!);
+                    await _eventManager.CallAsync(e);
+                    if (e.IsCancelled)
+                    {
+                        _ = Task.Delay(100).ContinueWith(async _ =>
+                        {
+                            using var writer = Game.StartRpc(NetId, RpcCalls.UpdateSystem);
+                            Rpc35UpdateSystem.Serialize(writer, type, sender.Character!, 0, 0, 0);
+                            await Game.SendToAllAsync(writer);
+                        });
+                    }
                 }
             }
         }
@@ -96,7 +112,7 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
                     }
 
                     // TODO: properly deserialize this RPC
-                    // Rpc35UpdateSystem.Deserialize(reader, Game, out var systemType, out var playerControl, out var sequenceId, out var state, out var ventId);
+                    Rpc35UpdateSystem.Deserialize(reader, Game, out var systemType, out var playerControl, out var state);
                     break;
                 }
 
