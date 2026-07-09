@@ -8,6 +8,11 @@ namespace Impostor.Api.Net.Inner.Objects
     public interface IInnerPlayerInfo
     {
         /// <summary>
+        ///     Gets the net id of the PlayerInfo object.
+        /// </summary>
+        uint NetId { get; }
+
+        /// <summary>
         ///     Gets the name of the player as decided by the host.
         /// </summary>
         string PlayerName { get; }

@@ -11,11 +11,11 @@ namespace Impostor.Server.Http;
 [ApiController]
 public sealed class PlayerCountController : ControllerBase
 {
-    IClientManager _iClientManager;
+    private readonly IClientManager _clientManager;
 
-    public PlayerCountController(IClientManager iClientManager)
+    public PlayerCountController(IClientManager clientManager)
     {
-        _iClientManager = iClientManager;
+        _clientManager = clientManager;
     }
 
     /// <summary>
@@ -26,6 +26,6 @@ public sealed class PlayerCountController : ControllerBase
     public IActionResult GetPlayerCount()
     {
         // get all the connected clients
-        return Ok(_iClientManager.Clients.Count());
+        return Ok(_clientManager.Clients.Count());
     }
 }
