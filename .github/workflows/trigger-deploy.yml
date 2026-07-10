@@ -1,0 +1,19 @@
+name: Trigger skeld.net deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      # Kicks the Deploy workflow in net.skeld.plugins, which builds this fork's
+      # server, the plugin, and ships both to the droplet.
+      - name: Dispatch deploy event
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.DEPLOY_DISPATCH_TOKEN }}
+          repository: danbudworthmead/net.skeld.plugins
+          event-type: deploy
