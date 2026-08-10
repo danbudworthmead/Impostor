@@ -40,7 +40,7 @@
   },
   "PluginLoader": {
     "Paths": [
-      "G:\\GitHub\\skeld.net 2.0\\net.skeld.plugins\\skeld.net\\bin\\Debug\\net8.0"
+      "C:\\skeld.net\\net.skeld.plugins\\skeld.net\\bin\\Debug\\net8.0"
     ],
     "LibraryPaths": []
   }
