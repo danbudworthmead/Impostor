@@ -75,6 +75,28 @@ namespace Impostor.Api.Net
         /// </summary>
         PlatformSpecificData PlatformSpecificData { get; }
 
+        /// <summary>
+        ///     Gets the Epic Online Services product user id the client claimed when it requested
+        ///     a matchmaker token, or an empty string if it could not be determined.
+        /// </summary>
+        /// <remarks>
+        ///     This value is supplied by the client and is not verified against Epic Online Services,
+        ///     so it can be spoofed. It is intended for display to other players only and must never
+        ///     be used for authorization, moderation or persistence.
+        /// </remarks>
+        string ProductUserId { get; }
+
+        /// <summary>
+        ///     Gets the friend code the client claimed when it requested a matchmaker token, or an
+        ///     empty string if it could not be determined.
+        /// </summary>
+        /// <remarks>
+        ///     This value is supplied by the client and is not verified against Epic Online Services,
+        ///     so it can be spoofed. It is intended for display to other players only and must never
+        ///     be used for authorization, moderation or persistence.
+        /// </remarks>
+        string FriendCode { get; }
+
         ValueTask<bool> ReportCheatAsync(CheatContext context, CheatCategory category, string message);
 
         [Obsolete("Please use the overload that adds a cheat category")]

@@ -32,6 +32,18 @@ namespace Impostor.Server.Net
 
         public PlatformSpecificData PlatformSpecificData { get; }
 
+        /// <summary>
+        ///     Gets or sets the client-claimed product user id. Never null; empty when unknown.
+        ///     Assigned once during registration, see <see cref="Manager.ClientManager" />.
+        /// </summary>
+        public string ProductUserId { get; internal set; } = string.Empty;
+
+        /// <summary>
+        ///     Gets or sets the client-claimed friend code. Never null; empty when unknown.
+        ///     Assigned once during registration, see <see cref="Manager.ClientManager" />.
+        /// </summary>
+        public string FriendCode { get; internal set; } = string.Empty;
+
         public GameVersion GameVersion { get; }
 
         public IHazelConnection Connection { get; }

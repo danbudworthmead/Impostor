@@ -34,6 +34,18 @@ namespace Impostor.Server.Net.Inner.Objects
 
         public int ClientId { get; internal set; }
 
+        /// <summary>
+        ///     Gets or sets the owning client's claimed friend code, shown to other players. Empty
+        ///     when unknown. Client-supplied and unverified; never use it for authorization.
+        /// </summary>
+        public string FriendCode { get; internal set; } = string.Empty;
+
+        /// <summary>
+        ///     Gets or sets the owning client's claimed product user id, used by the client's own
+        ///     friend system. Empty when unknown. Client-supplied and unverified.
+        /// </summary>
+        public string ProductUserId { get; internal set; } = string.Empty;
+
         public string PlayerName => CurrentOutfit.PlayerName;
 
         public Dictionary<PlayerOutfitType, PlayerOutfit> Outfits { get; } = new()
@@ -128,8 +140,10 @@ namespace Impostor.Server.Net.Inner.Objects
                 Tasks[i].Serialize(writer);
             }
 
-            writer.Write(string.Empty); // FriendCode
-            writer.Write(string.Empty); // PUID
+            // Note the order here is FriendCode then PUID, which is the opposite of
+            // Message01JoinGameS2C and Message07JoinedGameS2C. That difference is real.
+            writer.Write(FriendCode);
+            writer.Write(ProductUserId);
             return new ValueTask<bool>(true);
         }
 

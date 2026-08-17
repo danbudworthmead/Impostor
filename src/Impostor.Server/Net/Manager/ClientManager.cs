@@ -24,13 +24,15 @@ namespace Impostor.Server.Net.Manager
         private readonly ICompatibilityManager _compatibilityManager;
         private readonly CompatibilityConfig _compatibilityConfig;
         private readonly IClientFactory _clientFactory;
+        private readonly ClientIdentityCache _identityCache;
         private int _idLast;
 
-        public ClientManager(ILogger<ClientManager> logger, IEventManager eventManager, IClientFactory clientFactory, ICompatibilityManager compatibilityManager, IOptions<CompatibilityConfig> compatibilityConfig)
+        public ClientManager(ILogger<ClientManager> logger, IEventManager eventManager, IClientFactory clientFactory, ICompatibilityManager compatibilityManager, IOptions<CompatibilityConfig> compatibilityConfig, ClientIdentityCache identityCache)
         {
             _logger = logger;
             _eventManager = eventManager;
             _clientFactory = clientFactory;
+            _identityCache = identityCache;
             _clients = new ConcurrentDictionary<int, ClientBase>();
             _compatibilityManager = compatibilityManager;
             _compatibilityConfig = compatibilityConfig.Value;
@@ -129,6 +131,14 @@ namespace Impostor.Server.Net.Manager
 
             var client = _clientFactory.Create(connection, name, clientVersion, language, chatMode, platformSpecificData);
             var id = NextId();
+
+            // Recover what this client told the matchmaker about itself moments ago. A miss just
+            // means other players see no friend code for them, so it is never fatal.
+            if (_identityCache.TryClaim(connection.EndPoint.Address, name, out var identity))
+            {
+                client.ProductUserId = identity.ProductUserId;
+                client.FriendCode = identity.FriendCode;
+            }
 
             client.Id = id;
             _logger.LogTrace("Client connected.");

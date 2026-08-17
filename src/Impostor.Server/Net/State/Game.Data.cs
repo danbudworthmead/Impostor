@@ -496,6 +496,11 @@ namespace Impostor.Server.Net.State
             playerInfo.NetId = _nextNetId++;
             playerInfo.OwnerId = ServerOwned;
             playerInfo.ClientId = sender.Client.Id;
+
+            // This object is server-owned, so what is written here is the only source other
+            // clients ever see for these fields.
+            playerInfo.FriendCode = sender.Client.FriendCode;
+            playerInfo.ProductUserId = sender.Client.ProductUserId;
             playerInfo.PlayerId = GameNet.GameData.GetNextAvailablePlayerId();
 
             // If player played a previous game, restore their color
