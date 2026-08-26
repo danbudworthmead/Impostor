@@ -85,7 +85,22 @@ namespace Impostor.Server.Net.Hazel
 
                 using (var message = e.Message.ReadMessage())
                 {
-                    await Client.HandleMessageAsync(message, e.Type);
+                    try
+                    {
+                        await Client.HandleMessageAsync(message, e.Type);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        // An exception escaping here used to unwind into Hazel's receive loop,
+                        // which stops serving this connection without a word: the client simply
+                        // sees the server go quiet and times out. Losing one message is bad, but
+                        // losing the connection silently is much worse to diagnose.
+                        _logger.LogError(
+                            ex,
+                            "Exception handling a {Tag} message from client {ClientId}, dropping it.",
+                            message.Tag,
+                            Client.Id);
+                    }
                 }
 
                 if (!IsConnected)

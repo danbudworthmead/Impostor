@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Impostor.Api.Net;
 using Impostor.Api.Net.Custom;
 using Impostor.Api.Net.Inner.Objects;
@@ -22,7 +21,9 @@ namespace Impostor.Server.Net.Inner.Objects
 
         public override ValueTask DeserializeAsync(IClientPlayer sender, IClientPlayer? target, IMessageReader reader, bool initialState)
         {
-            throw new NotImplementedException();
+            // Carries no state in either direction. Throwing here would escape into the Hazel
+            // receive loop and silently stop serving the connection that sent it.
+            return default;
         }
     }
 }

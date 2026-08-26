@@ -33,7 +33,9 @@ namespace Impostor.Server.Net.Inner.Objects.Components
 
         public override ValueTask DeserializeAsync(IClientPlayer sender, IClientPlayer? target, IMessageReader reader, bool initialState)
         {
-            throw new NotImplementedException();
+            // Carries no state in either direction. Throwing here would escape into the Hazel
+            // receive loop and silently stop serving the connection that sent it.
+            return default;
         }
 
         public override async ValueTask<bool> HandleRpcAsync(ClientPlayer sender, ClientPlayer? target, RpcCalls call, IMessageReader reader)
