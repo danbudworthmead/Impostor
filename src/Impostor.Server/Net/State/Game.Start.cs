@@ -264,12 +264,7 @@ namespace Impostor.Server.Net.State
             foreach (var player in players)
             {
                 var role = impostors.Contains(player) ? RoleTypes.Impostor : RoleTypes.Crewmate;
-
-                player.Character!.PlayerInfo!.RoleType = role;
-
-                using var writer = StartRpc(player.Character.NetId, RpcCalls.SetRole);
-                Rpc44SetRole.Serialize(writer, role, false);
-                await FinishRpcAsync(writer);
+                await player.Character!.SetRoleAsync(role);
             }
 
             _logger.LogInformation(

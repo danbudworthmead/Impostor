@@ -113,6 +113,22 @@ namespace Impostor.Api.Net.Inner.Objects
         ValueTask SendChatToPlayerAsync(string text, IInnerPlayerControl? player = null);
 
         /// <summary>
+        ///     Sets the role of the current <see cref="IInnerPlayerControl" />, on the server's own
+        ///     initiative rather than in reply to a client's <see cref="RpcCalls.SetRole" /> request.
+        /// </summary>
+        /// <param name="role">The role to assign.</param>
+        /// <param name="canOverrideRole">Passed through to the client unchanged; see <see cref="RpcCalls.SetRole" />.</param>
+        /// <remarks>
+        ///     Mirrors the client's own reaction to this RPC: assigning a role that is not one of
+        ///     the dead roles (<see cref="RoleTypes.ImpostorGhost" />, <see cref="RoleTypes.CrewmateGhost" />,
+        ///     <see cref="RoleTypes.GuardianAngel" />) to a player the server currently has marked
+        ///     dead revives them in place, exactly as it would if a host client did this.
+        /// </remarks>
+        /// <exception cref="ImpostorProtocolException">Thrown when player doesn't have a PlayerInfo.</exception>
+        /// <returns>Task that must be awaited.</returns>
+        ValueTask SetRoleAsync(RoleTypes role, bool canOverrideRole = false);
+
+        /// <summary>
         ///     Murder <paramref name="target" /> player or remove their protective shield.
         /// </summary>
         /// <param name="target">Target player to murder.</param>

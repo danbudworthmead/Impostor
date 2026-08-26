@@ -117,6 +117,32 @@ namespace Impostor.Server.Net.Inner.Objects
             await Game.FinishRpcAsync(writer);
         }
 
+        public async ValueTask SetRoleAsync(RoleTypes role, bool canOverrideRole = false)
+        {
+            if (PlayerInfo == null)
+            {
+                throw new ImpostorProtocolException("Cannot set role, PlayerInfo is null");
+            }
+
+            if (role is RoleTypes.ImpostorGhost or RoleTypes.CrewmateGhost or RoleTypes.GuardianAngel)
+            {
+                PlayerInfo.RoleWhenAlive = PlayerInfo.RoleType;
+                PlayerInfo.IsDead = true;
+            }
+            else if (PlayerInfo.IsDead)
+            {
+                // The client does this same comparison on arrival: a role that is not itself a
+                // dead role, arriving for a player it still has marked dead, revives them.
+                PlayerInfo.IsDead = false;
+            }
+
+            PlayerInfo.RoleType = role;
+
+            using var writer = Game.StartRpc(NetId, RpcCalls.SetRole);
+            Rpc44SetRole.Serialize(writer, role, canOverrideRole);
+            await Game.FinishRpcAsync(writer);
+        }
+
         public async ValueTask SendChatAsync(string text)
         {
             using var writer = Game.StartRpc(NetId, RpcCalls.SendChat);
