@@ -636,7 +636,7 @@ namespace Impostor.Server.Net.State
         ///     Creates a player's character, which a host client would normally spawn on their
         ///     behalf. It is owned by that player so they keep control of their own movement.
         /// </summary>
-        private async ValueTask SpawnPlayerControlAsync(ClientPlayer sender, Vector2? position = null)
+        private async ValueTask SpawnPlayerControlAsync(ClientPlayer sender, Vector2? position = null, bool isRespawn = false)
         {
             if (sender.Character != null)
             {
@@ -651,7 +651,17 @@ namespace Impostor.Server.Net.State
             }
 
             var control = (InnerPlayerControl)ActivatorUtilities.CreateInstance(_serviceProvider, typeof(InnerPlayerControl), this);
-            control.SpawnFlags = SpawnFlags.IsClientCharacter;
+
+            // A client tracks one "the character for this owner" reference for its whole life and
+            // never clears it, not even once that character is despawned - a real client never
+            // expects its own owned character to be despawned out from under it in the first
+            // place, so nothing ever resets it. Flagging a respawn IsClientCharacter would have
+            // every client - the owner's own included - refuse it outright as a duplicate of an
+            // owner that, so far as that bookkeeping is concerned, still has one. Ownership,
+            // movement and the kill button all key off OwnerId instead, which this still carries
+            // regardless, so nothing gameplay-relevant is lost by leaving the flag off here.
+            control.SpawnFlags = isRespawn ? SpawnFlags.None : SpawnFlags.IsClientCharacter;
+
             control.PlayerId = playerInfo.PlayerId;
 
             // IsNew makes the client seat the character itself, using lobby spawn positions that
@@ -702,7 +712,7 @@ namespace Impostor.Server.Net.State
             var position = oldCharacter.NetworkTransform.Position;
 
             await DespawnCharacterAsync(clientPlayer);
-            await SpawnPlayerControlAsync(clientPlayer, position);
+            await SpawnPlayerControlAsync(clientPlayer, position, isRespawn: true);
 
             return clientPlayer.Character;
         }
