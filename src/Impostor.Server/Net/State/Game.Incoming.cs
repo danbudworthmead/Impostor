@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Impostor.Api.Games;
 using Impostor.Api.Innersloth;
 using Impostor.Api.Net;
+using Impostor.Api.Net.Messages;
 using Impostor.Hazel;
 using Impostor.Server.Events;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,33 @@ namespace Impostor.Server.Net.State
             using var packet = MessageWriter.Get(MessageType.Reliable);
             message.CopyTo(packet);
             await SendToAllAsync(packet);
+
+            await _eventManager.CallAsync(new GameStartingEvent(this));
+        }
+
+        /// <summary>
+        ///     Starts the game on the server's own initiative. A server hosted lobby has no host
+        ///     client, so nothing else will ever send the StartGame packet that begins a game.
+        /// </summary>
+        /// <returns>A <see cref="ValueTask" /> representing the asynchronous operation.</returns>
+        public async ValueTask StartAsync()
+        {
+            if (!IsServerHosted || GameState != GameStates.NotStarted)
+            {
+                return;
+            }
+
+            GameState = GameStates.Starting;
+
+            using (var packet = MessageWriter.Get(MessageType.Reliable))
+            {
+                // Clients do not read the body of this one; receiving it is the whole signal.
+                packet.StartMessage(MessageFlags.StartGame);
+                packet.Write(Code.Value);
+                packet.EndMessage();
+
+                await SendToAllAsync(packet);
+            }
 
             await _eventManager.CallAsync(new GameStartingEvent(this));
         }

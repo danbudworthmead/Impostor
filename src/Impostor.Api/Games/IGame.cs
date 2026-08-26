@@ -80,6 +80,16 @@ namespace Impostor.Api.Games
         /// </remarks>
         ValueTask<IClientPlayer?> SpawnFakePlayerAsync(string name, Vector2? position = null);
 
+        /// <summary>
+        /// Begins the game without waiting for a host client to ask for it.
+        /// </summary>
+        /// <returns>A <see cref="ValueTask" /> representing the asynchronous operation.</returns>
+        /// <remarks>
+        /// Only does anything while <see cref="IsServerHosted" /> is true and the game has not
+        /// started. Any other lobby is begun by its host client instead.
+        /// </remarks>
+        ValueTask StartAsync();
+
         IClientPlayer? GetClientPlayer(int clientId);
 
         T? FindObjectByNetId<T>(uint netId)
