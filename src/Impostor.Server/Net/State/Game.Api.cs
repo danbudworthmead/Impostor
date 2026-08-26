@@ -27,7 +27,11 @@ namespace Impostor.Server.Net.State
 
         public async ValueTask SyncSettingsAsync()
         {
-            if (Host?.Character == null)
+            // The guard below exists for a real host client: syncing before it has spawned risks
+            // it overwriting the change with its own defaults moments later. A server hosted
+            // game's host seat never spawns a character at all, so that race cannot happen and
+            // this method is the only way its options are ever synced.
+            if (!IsServerHosted && Host?.Character == null)
             {
                 throw new ImpostorException("Attempted to change settings when the host was not spawned.");
             }
