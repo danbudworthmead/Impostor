@@ -8,6 +8,7 @@ using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Net.Inner.Objects.Components;
 using Impostor.Api.Net.Messages.Rpcs;
 using Impostor.Server.Events.Player;
+using Impostor.Server.Net.Inner;
 
 namespace Impostor.Server.Net.Inner.Objects
 {
@@ -211,7 +212,9 @@ namespace Impostor.Server.Net.Inner.Objects
         {
             if (!result.IsFailed())
             {
-                ((InnerPlayerControl)target).Die(DeathReason.Kill);
+                var innerTarget = (InnerPlayerControl)target;
+                innerTarget.Die(DeathReason.Kill);
+                await BroadcastPlayerInfoAsync(innerTarget);
             }
 
             using var writer = Game.StartRpc(NetId, RpcCalls.MurderPlayer);
@@ -224,6 +227,32 @@ namespace Impostor.Server.Net.Inner.Objects
         public async ValueTask MurderPlayerAsync(IInnerPlayerControl target)
         {
             await MurderPlayerAsync(target, MurderResultFlags.Succeeded);
+        }
+
+        /// <summary>
+        ///     Sends a player's current <see cref="InnerPlayerInfo" /> to everyone. Nothing else in
+        ///     this protocol ever re-syncs one after its initial spawn: every field change is
+        ///     carried by its own dedicated RPC (SetName, SetColor, SetRole, ...) instead. Death has
+        ///     no such RPC of its own - the MurderPlayer RPC that announces a kill only tells
+        ///     clients to show it, and never touches their own cached copy of
+        ///     <see cref="IInnerPlayerInfo.IsDead" />. That is harmless for a normal game, where a
+        ///     dead player never needs reviving, but it means that cached copy would otherwise never
+        ///     become accurate - and <see cref="SetRoleAsync" />'s own revive-on-arrival compares
+        ///     directly against it.
+        /// </summary>
+        private async ValueTask BroadcastPlayerInfoAsync(InnerPlayerControl player)
+        {
+            if (player.PlayerInfo is not { } playerInfo)
+            {
+                return;
+            }
+
+            using var writer = Game.StartGameData();
+            writer.StartMessage(GameDataTag.DataFlag);
+            writer.WritePacked(playerInfo.NetId);
+            await playerInfo.SerializeAsync(writer, false);
+            writer.EndMessage();
+            await Game.FinishGameDataAsync(writer);
         }
 
         public async ValueTask ProtectPlayerAsync(IInnerPlayerControl target)
