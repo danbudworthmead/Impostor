@@ -239,6 +239,17 @@ namespace Impostor.Server.Net.State
                 await PlayerAdd(sender);
             }
 
+            // The host is already here and is never going to rejoin, so there is nothing to wait
+            // for. Without this everyone sits on "waiting for host" after a game ends until
+            // their client gives up, because the id below can never match a real player.
+            if (IsServerHosted)
+            {
+                GameState = GameStates.NotStarted;
+                await HandleJoinGameNew(sender, false);
+                await CheckLimboPlayers();
+                return;
+            }
+
             // Check if the host joined and let everyone join.
             if (sender.Client.Id == HostId)
             {
