@@ -117,7 +117,14 @@ namespace Impostor.Api.Net.Inner.Objects
         ///     initiative rather than in reply to a client's <see cref="RpcCalls.SetRole" /> request.
         /// </summary>
         /// <param name="role">The role to assign.</param>
-        /// <param name="canOverrideRole">Passed through to the client unchanged; see <see cref="RpcCalls.SetRole" />.</param>
+        /// <param name="canOverrideRole">
+        /// Whether this may reassign a role the player already has one of. Leave false for the
+        /// very first role a player is given in a match. A client marks its role assignment final
+        /// the first time one arrives with this false - which is what a normal game start does -
+        /// and silently ignores every non-ghost SetRole after that unless this is true, including
+        /// the revive documented below: a client that never runs the code that revives a player
+        /// leaves them exactly as their murder left them, a ghost.
+        /// </param>
         /// <remarks>
         ///     Mirrors the client's own reaction to this RPC: assigning a role that is not one of
         ///     the dead roles (<see cref="RoleTypes.ImpostorGhost" />, <see cref="RoleTypes.CrewmateGhost" />,
