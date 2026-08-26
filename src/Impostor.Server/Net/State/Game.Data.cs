@@ -273,8 +273,13 @@ namespace Impostor.Server.Net.State
 
                         // When the server is host it has to build the scene the player arrives
                         // into, and then give them a character to control.
+                        // When the server is host it has to build everything a host client would
+                        // normally create before the player can do anything. Order matches the
+                        // client: vote ban system, game manager, then the lobby itself.
                         if (IsServerHosted)
                         {
+                            await EnsureVoteBanSystemAsync();
+                            await EnsureGameManagerAsync();
                             await EnsureLobbyBehaviourAsync();
                         }
 
@@ -521,6 +526,60 @@ namespace Impostor.Server.Net.State
             }
 
             return true;
+        }
+
+        /// <summary>
+        ///     Creates the game manager, which carries the game options and the logic the client
+        ///     drives its flow from. A host client spawns this when it reaches the lobby scene,
+        ///     and a player sits on "waiting for host" until it arrives.
+        /// </summary>
+        private async ValueTask EnsureGameManagerAsync()
+        {
+            if (GameNet.GameManager != null)
+            {
+                return;
+            }
+
+            var managerType = Options.GameMode is GameModes.HideNSeek or GameModes.SeekFools
+                ? typeof(InnerHideAndSeekManager)
+                : typeof(InnerNormalGameManager);
+
+            var manager = (InnerGameManager)ActivatorUtilities.CreateInstance(_serviceProvider, managerType, this);
+            manager.SpawnFlags = SpawnFlags.None;
+
+            if (!RegisterServerObject(manager, ServerOwned))
+            {
+                return;
+            }
+
+            GameNet.GameManager = manager;
+
+            _logger.LogTrace("Spawning {Type} (netId {NetId})", managerType.Name, manager.NetId);
+            await SendObjectSpawnAsync(manager);
+        }
+
+        /// <summary>
+        ///     Creates the vote ban system, which the host spawns alongside the game manager.
+        /// </summary>
+        private async ValueTask EnsureVoteBanSystemAsync()
+        {
+            if (GameNet.VoteBan != null)
+            {
+                return;
+            }
+
+            var voteBan = (InnerVoteBanSystem)ActivatorUtilities.CreateInstance(_serviceProvider, typeof(InnerVoteBanSystem), this);
+            voteBan.SpawnFlags = SpawnFlags.None;
+
+            if (!RegisterServerObject(voteBan, ServerOwned))
+            {
+                return;
+            }
+
+            GameNet.VoteBan = voteBan;
+
+            _logger.LogTrace("Spawning VoteBanSystem (netId {NetId})", voteBan.NetId);
+            await SendObjectSpawnAsync(voteBan);
         }
 
         /// <summary>

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Impostor.Api;
 using Impostor.Api.Events.Managers;
@@ -30,7 +29,21 @@ namespace Impostor.Server.Net.Inner.Objects.Components
 
         public override ValueTask<bool> SerializeAsync(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            // Mirrors DeserializeAsync below: a count, then each voter followed by its three
+            // votes. A fresh lobby has none, so this is usually a single zero byte.
+            writer.Write((byte)_votes.Count);
+
+            foreach (var (clientId, votes) in _votes)
+            {
+                writer.Write(clientId);
+
+                for (var i = 0; i < 3; i++)
+                {
+                    writer.WritePacked(votes[i]);
+                }
+            }
+
+            return new ValueTask<bool>(true);
         }
 
         public override async ValueTask DeserializeAsync(IClientPlayer sender, IClientPlayer? target, IMessageReader reader, bool initialState)

@@ -69,9 +69,20 @@ internal abstract class InnerGameManager : InnerNetObject, IInnerGameManager
         return result;
     }
 
-    public override ValueTask<bool> SerializeAsync(IMessageWriter writer, bool initialState)
+    public override async ValueTask<bool> SerializeAsync(IMessageWriter writer, bool initialState)
     {
-        throw new System.NotImplementedException();
+        // Each logic component travels in its own sub-message tagged with its index, which is how
+        // the client pairs the bytes back up with the component that reads them.
+        var wroteAnything = false;
+
+        for (var i = 0; i < _logicComponents.Count; i++)
+        {
+            writer.StartMessage((byte)i);
+            wroteAnything |= await _logicComponents[i].SerializeAsync(writer, initialState);
+            writer.EndMessage();
+        }
+
+        return wroteAnything;
     }
 
     public override async ValueTask DeserializeAsync(IClientPlayer sender, IClientPlayer? target, IMessageReader reader, bool initialState)
