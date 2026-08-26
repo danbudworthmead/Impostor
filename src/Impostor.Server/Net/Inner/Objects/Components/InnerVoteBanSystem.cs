@@ -72,7 +72,7 @@ namespace Impostor.Server.Net.Inner.Objects.Components
             {
                 Rpc26AddVote.Deserialize(reader, out var clientId, out var targetClientId);
 
-                await _eventManager.CallAsync(new ClientAddVoteEvent(sender.Client, clientId, targetClientId, sender.Client.Connection));
+                await _eventManager.CallAsync(new ClientAddVoteEvent(sender.Client, clientId, targetClientId, sender.Client.Connection!));
 
                 if (clientId != sender.Client.Id)
                 {

@@ -6,12 +6,49 @@ using Impostor.Api.Net;
 using Impostor.Hazel;
 using Impostor.Server.Events;
 using Impostor.Server.Net.Hazel;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Impostor.Server.Net.State
 {
     internal partial class Game
     {
+        /// <summary>
+        ///     Puts a server-controlled client into the host seat before any real player joins,
+        ///     so that <see cref="PlayerAdd" /> assigns it the host id naturally. There is no
+        ///     packet for handing the host role over mid-lobby, so claiming it first is the only
+        ///     way to do this without faking a player disconnect.
+        /// </summary>
+        /// <param name="owner">The client that asked for this game to be created.</param>
+        /// <returns>A task that completes once the server holds the host seat.</returns>
+        internal async ValueTask InitializeServerHostAsync(IClient owner)
+        {
+            if (ServerHost != null || HostId != -1)
+            {
+                return;
+            }
+
+            // Adopt the creating player's version. Joining clients are checked against the host's
+            // version, so a synthetic one here would lock everybody out of the lobby.
+            var client = new ServerHostClient(_clientManager.NextId(), owner.GameVersion);
+            var player = new ClientPlayer(
+                _serviceProvider.GetRequiredService<ILogger<ClientPlayer>>(),
+                client,
+                this,
+                _timeoutConfig.SpawnTimeout);
+
+            // It never spawns a character, so the spawn timeout must not be allowed to kick it.
+            player.DisableSpawnTimeout();
+            player.Limbo = LimboStates.NotLimbo;
+            client.Player = player;
+
+            ServerHost = player;
+
+            await PlayerAdd(player);
+
+            _logger.LogInformation("{Code} - Server took the host seat (client id {ClientId}).", Code, client.Id);
+        }
+
         private async ValueTask PlayerAdd(ClientPlayer player)
         {
             // Store player.
@@ -56,8 +93,9 @@ namespace Impostor.Server.Net.State
                 await _eventManager.CallAsync(new GameHostChangedEvent(this, player, Host));
             }
 
-            // Game is empty, remove it.
-            if (_players.IsEmpty || Host == null)
+            // Game is empty, remove it. The server host never leaves, so it would otherwise keep
+            // an abandoned game alive forever: count real players instead.
+            if (PlayerCount == 0 || Host == null)
             {
                 GameState = GameStates.Destroyed;
 
@@ -66,7 +104,7 @@ namespace Impostor.Server.Net.State
                 return true;
             }
 
-            if (isBan)
+            if (isBan && player.Client.Connection != null)
             {
                 BanIp(player.Client.Connection.EndPoint.Address);
             }
@@ -78,7 +116,7 @@ namespace Impostor.Server.Net.State
             {
                 await Task.Delay(_timeoutConfig.ConnectionTimeout);
 
-                if (player.Client.Connection.IsConnected && player.Client.Connection is HazelConnection hazel)
+                if (player.Client.Connection is { IsConnected: true } and HazelConnection hazel)
                 {
                     _logger.LogInformation("{0} - Player {1} ({2}) kept connection open after leaving, disposing.", Code, player.Client.Name, playerId);
                     await player.Client.DisconnectAsync(isBan ? DisconnectReason.Banned : DisconnectReason.Kicked);
@@ -99,6 +137,14 @@ namespace Impostor.Server.Net.State
 
         private async ValueTask MigrateHost()
         {
+            // In a server hosted game the host seat belongs to the server for the lifetime of
+            // the game; a real player must never inherit it.
+            if (ServerHost != null)
+            {
+                HostId = ServerHost.Client.Id;
+                return;
+            }
+
             // Pick the first player as new host.
             var host = _players
                 .Select(p => p.Value)

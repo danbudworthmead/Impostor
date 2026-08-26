@@ -104,7 +104,7 @@ namespace Impostor.Server.Net
             {
                 if (_antiCheatConfig.BanIpFromGame)
                 {
-                    player.Game.BanIp(Connection.EndPoint.Address);
+                    player.Game.BanIp(Connection!.EndPoint.Address);
                 }
 
                 await player.Game.HandleRemovePlayer(Id, DisconnectReason.Hacking);
@@ -165,7 +165,7 @@ namespace Impostor.Server.Net
                     using (var writer = MessageWriter.Get(MessageType.Reliable))
                     {
                         Message00HostGameS2C.Serialize(writer, game.Code);
-                        await Connection.SendAsync(writer);
+                        await Connection!.SendAsync(writer);
                     }
 
                     break;
@@ -529,7 +529,7 @@ namespace Impostor.Server.Net
 
             Message22QueryPlatformIdsS2C.Serialize(message, code, playerSpecificData);
 
-            return Connection.SendAsync(message);
+            return Connection!.SendAsync(message);
         }
     }
 }

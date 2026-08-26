@@ -11,7 +11,8 @@ namespace Impostor.Server.Net
 {
     internal abstract class ClientBase : IClient
     {
-        protected ClientBase(string name, GameVersion gameVersion, Language language, QuickChatModes chatMode, PlatformSpecificData platformSpecificData, IHazelConnection connection)
+        // connection is null only for ServerHostClient, which exists purely inside the server.
+        protected ClientBase(string name, GameVersion gameVersion, Language language, QuickChatModes chatMode, PlatformSpecificData platformSpecificData, IHazelConnection? connection)
         {
             Name = name;
             GameVersion = gameVersion;
@@ -46,7 +47,7 @@ namespace Impostor.Server.Net
 
         public GameVersion GameVersion { get; }
 
-        public IHazelConnection Connection { get; }
+        public IHazelConnection? Connection { get; }
 
         public IDictionary<object, object> Items { get; }
 
@@ -72,6 +73,11 @@ namespace Impostor.Server.Net
 
         public async ValueTask DisconnectAsync(DisconnectReason reason, string? message = null)
         {
+            if (Connection == null)
+            {
+                return;
+            }
+
             await Connection.CustomDisconnectAsync(reason, message);
         }
 

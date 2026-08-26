@@ -1063,7 +1063,7 @@ namespace Impostor.Server.Net.Inner.Objects
                     }
                 }
 
-                PlayerInfo.LastMurder = _dateTimeProvider.UtcNow - TimeSpan.FromMilliseconds(sender.Client.Connection.AveragePing);
+                PlayerInfo.LastMurder = _dateTimeProvider.UtcNow - TimeSpan.FromMilliseconds(sender.Client.Connection?.AveragePing ?? 0);
                 IsMurdering = target;
             }
 

@@ -32,7 +32,9 @@ namespace Impostor.Server.Net.State
 
         public async ValueTask SendToAsync(IMessageWriter writer, int id)
         {
-            if (TryGetPlayer(id, out var player))
+            // The server host has no connection; targeting it is a no-op rather than an error,
+            // so callers do not have to special-case server hosted games.
+            if (TryGetPlayer(id, out var player) && player.Client.Connection != null)
             {
                 await player.Client.Connection.SendAsync(writer);
             }

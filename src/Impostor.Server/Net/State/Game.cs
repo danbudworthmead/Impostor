@@ -90,9 +90,22 @@ namespace Impostor.Server.Net.State
 
         public IDictionary<object, object> Items { get; }
 
-        public int PlayerCount => _players.Count;
+        /// <summary>
+        ///     Gets the number of real players in the game. The server host, when there is one,
+        ///     is not a player and must not count towards lobby size or the public listing.
+        /// </summary>
+        public int PlayerCount => ServerHost != null ? _players.Count - 1 : _players.Count;
 
         public ClientPlayer? Host => _players.GetValueOrDefault(HostId);
+
+        /// <summary>
+        ///     Gets the server-controlled player holding the host seat, or null when a real
+        ///     player is host.
+        /// </summary>
+        public ClientPlayer? ServerHost { get; private set; }
+
+        /// <inheritdoc />
+        public bool IsServerHosted => ServerHost != null;
 
         public IEnumerable<IClientPlayer> Players => _players.Select(p => p.Value);
 

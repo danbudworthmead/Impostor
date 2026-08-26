@@ -152,7 +152,7 @@ namespace Impostor.Server.Net.State
         private async ValueTask<GameJoinResult> AddClientSafeAsync(ClientBase client)
         {
             // Check if the IP of the player is banned.
-            if (_bannedIps.Contains(client.Connection.EndPoint.Address))
+            if (client.Connection != null && _bannedIps.Contains(client.Connection.EndPoint.Address))
             {
                 return GameJoinResult.FromError(GameJoinError.Banned);
             }
@@ -183,7 +183,8 @@ namespace Impostor.Server.Net.State
             // Check if;
             // - The player is already in this game.
             // - The game is full.
-            if (player?.Game != this && _players.Count >= Options.MaxPlayers)
+            // PlayerCount excludes the server host, which does not occupy a lobby slot.
+            if (player?.Game != this && PlayerCount >= Options.MaxPlayers)
             {
                 return GameJoinResult.FromError(GameJoinError.GameFull);
             }

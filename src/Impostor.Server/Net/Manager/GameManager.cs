@@ -140,6 +140,14 @@ namespace Impostor.Server.Net.Manager
 
             _logger.LogDebug("Created game with code {0}.", game.Code);
 
+            // Claim the host seat before anybody joins. This has to happen before the created
+            // event so plugins already see the finished shape of the game, and before the first
+            // real join, because whoever joins first would otherwise become host permanently.
+            if (_compatibilityConfig.AllowServerAsHost && owner != null)
+            {
+                await game.InitializeServerHostAsync(owner);
+            }
+
             await _eventManager.CallAsync(new GameCreatedEvent(game, owner));
 
             return (true, game);

@@ -49,6 +49,16 @@ namespace Impostor.Api.Games
         bool IsHostAuthoritive { get; }
 
         /// <summary>
+        /// Gets a value indicating whether the server itself holds the host seat of this game,
+        /// rather than the player who created it.
+        /// </summary>
+        /// <remarks>
+        /// Experimental. When true, <see cref="Host" /> refers to a client that exists only
+        /// inside the server and has no connection, so it must never be sent to or disconnected.
+        /// </remarks>
+        bool IsServerHosted { get; }
+
+        /// <summary>
         /// Gets the mod GUID that the game was registered with through the AMCI.
         /// </summary>
         Guid? ModGuid { get; }
