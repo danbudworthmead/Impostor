@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Impostor.Api;
@@ -634,7 +635,7 @@ namespace Impostor.Server.Net.State
         ///     Creates a player's character, which a host client would normally spawn on their
         ///     behalf. It is owned by that player so they keep control of their own movement.
         /// </summary>
-        private async ValueTask SpawnPlayerControlAsync(ClientPlayer sender)
+        private async ValueTask SpawnPlayerControlAsync(ClientPlayer sender, Vector2? position = null)
         {
             if (sender.Character != null)
             {
@@ -650,12 +651,23 @@ namespace Impostor.Server.Net.State
 
             var control = (InnerPlayerControl)ActivatorUtilities.CreateInstance(_serviceProvider, typeof(InnerPlayerControl), this);
             control.SpawnFlags = SpawnFlags.IsClientCharacter;
-            control.IsNew = true;
             control.PlayerId = playerInfo.PlayerId;
+
+            // IsNew makes the client seat the character itself, using lobby spawn positions that
+            // only exist client side. That is what we want when we have no position of our own to
+            // give it, and exactly what we must avoid when we do.
+            control.IsNew = position == null;
 
             if (!RegisterServerObject(control, sender.Client.Id))
             {
                 return;
+            }
+
+            if (position != null)
+            {
+                // Set before the spawn is sent, so the position travels in the spawn payload
+                // rather than arriving afterwards and visibly dragging the character across.
+                await control.NetworkTransform.SetPositionAsync(sender, position.Value);
             }
 
             _logger.LogInformation("SPAWNDIAG PlayerControl client={ClientId} playerId={PlayerId} netId={NetId} owner={OwnerId} physics={PhysicsNetId} transform={TransformNetId} isNew={IsNew}", sender.Client.Id, control.PlayerId, control.NetId, control.OwnerId, control.Physics.NetId, control.NetworkTransform.NetId, control.IsNew);
@@ -684,8 +696,9 @@ namespace Impostor.Server.Net.State
         ///     that never sends anything, and no real player can move it or act as it.
         /// </summary>
         /// <param name="name">Name to show above the character.</param>
+        /// <param name="position">Where to stand it, or null to let the client seat it.</param>
         /// <returns>The player that was added, or null if one could not be.</returns>
-        public async ValueTask<IClientPlayer?> SpawnFakePlayerAsync(string name)
+        public async ValueTask<IClientPlayer?> SpawnFakePlayerAsync(string name, Vector2? position = null)
         {
             if (!IsServerHosted || GameState != GameStates.NotStarted)
             {
@@ -731,7 +744,7 @@ namespace Impostor.Server.Net.State
             }
 
             await SpawnPlayerInfoAsync(player);
-            await SpawnPlayerControlAsync(player);
+            await SpawnPlayerControlAsync(player, position);
 
             if (player.Character == null)
             {

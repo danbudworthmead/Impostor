@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Numerics;
 using System.Threading.Tasks;
 using Impostor.Api.Innersloth;
 using Impostor.Api.Innersloth.GameOptions;
@@ -68,12 +69,16 @@ namespace Impostor.Api.Games
         /// controlled by nobody.
         /// </summary>
         /// <param name="name">Name to show above the character.</param>
+        /// <param name="position">
+        /// Where to stand it. When omitted the client seats it as it would any arriving player,
+        /// using lobby spawn positions the server has no knowledge of.
+        /// </param>
         /// <returns>The player that was added, or null if one could not be.</returns>
         /// <remarks>
         /// Only works while <see cref="IsServerHosted" /> is true and the game has not started,
         /// because a real host client would immediately fight the server over the character.
         /// </remarks>
-        ValueTask<IClientPlayer?> SpawnFakePlayerAsync(string name);
+        ValueTask<IClientPlayer?> SpawnFakePlayerAsync(string name, Vector2? position = null);
 
         IClientPlayer? GetClientPlayer(int clientId);
 
