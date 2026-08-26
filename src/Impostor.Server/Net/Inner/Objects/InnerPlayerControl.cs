@@ -684,9 +684,56 @@ namespace Impostor.Server.Net.Inner.Objects
                 }
             }
 
+            // Normally the host answers this with a SetName rpc. With no host client nobody
+            // would, so the name is never applied and the client shows the player as "???".
+            if (Game.IsServerHosted)
+            {
+                await SetNameAsync(GetUnusedName(name));
+                return true;
+            }
+
             RequestedPlayerName.Enqueue(name);
 
             return true;
+        }
+
+        /// <summary>
+        ///     Finds a name close to the requested one that nobody else in the lobby is using,
+        ///     which is what a host client does when two players share a name.
+        /// </summary>
+        private string GetUnusedName(string requested)
+        {
+            if (!IsNameTaken(requested))
+            {
+                return requested;
+            }
+
+            for (var attempt = 2; attempt < 100; attempt++)
+            {
+                var suffix = attempt.ToString();
+
+                // Names are capped at ten characters, so make room for the suffix.
+                var stem = requested.Length + suffix.Length > 10
+                    ? requested[..(10 - suffix.Length)]
+                    : requested;
+
+                var candidate = stem + suffix;
+
+                if (!IsNameTaken(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            return requested;
+        }
+
+        private bool IsNameTaken(string name)
+        {
+            return Game.Players.Any(player =>
+                player.Character != null
+                && player.Character != this
+                && player.Character.PlayerInfo?.PlayerName == name);
         }
 
         private async ValueTask<bool> HandleSetName(ClientPlayer sender, string name)
@@ -804,9 +851,35 @@ namespace Impostor.Server.Net.Inner.Objects
                 }
             }
 
+            // As with the name, no host client will answer this, so the server picks. Two players
+            // sharing a colour is not allowed, so fall through to the next free one.
+            if (Game.IsServerHosted)
+            {
+                await SetColorAsync(GetUnusedColor(color));
+                return true;
+            }
+
             RequestedColorId.Enqueue(color);
 
             return true;
+        }
+
+        /// <summary>
+        ///     Returns the requested colour if it is free, otherwise the next one that is.
+        /// </summary>
+        private ColorType GetUnusedColor(ColorType requested)
+        {
+            for (var offset = 0; offset < ColorsCount; offset++)
+            {
+                var candidate = (ColorType)(((byte)requested + offset) % ColorsCount);
+
+                if (!Game.IsColorUsed(candidate, this))
+                {
+                    return candidate;
+                }
+            }
+
+            return requested;
         }
 
         private async ValueTask<bool> HandleSetColor(ClientPlayer sender, ColorType color)

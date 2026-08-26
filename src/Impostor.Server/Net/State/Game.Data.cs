@@ -484,7 +484,20 @@ namespace Impostor.Server.Net.State
 
         private async ValueTask SyncServerObjectsAsync(ClientPlayer sender)
         {
-            foreach (var obj in _allObjects.Values)
+            // A PlayerControl is matched to its PlayerInfo by player id as it spawns, so the info
+            // has to arrive first, and the lobby scaffolding before either. Iterating the object
+            // dictionary gives no order at all, so it is imposed here.
+            static int SyncOrderOf(InnerNetObject obj) => obj switch
+            {
+                InnerGameManager => 0,
+                InnerVoteBanSystem => 1,
+                InnerLobbyBehaviour => 2,
+                InnerShipStatus => 3,
+                InnerPlayerInfo => 4,
+                _ => 5,
+            };
+
+            foreach (var obj in _allObjects.Values.OrderBy(SyncOrderOf))
             {
                 // Components are registered individually so their RPCs resolve, but they travel
                 // inside their parent's spawn message. Only spawn roots are sent.
