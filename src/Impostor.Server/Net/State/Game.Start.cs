@@ -52,6 +52,10 @@ namespace Impostor.Server.Net.State
                 return;
             }
 
+            // Before anything else, while the lobby is still a lobby: removing a player only
+            // tidies away their objects in the not started state.
+            await RemoveFakePlayersAsync();
+
             GameState = GameStates.Starting;
 
             using (var packet = MessageWriter.Get(MessageType.Reliable))
@@ -113,6 +117,54 @@ namespace Impostor.Server.Net.State
                 usedTypes.Add(task.Type);
                 assigned.Add((byte)task.Id);
             }
+        }
+
+        /// <summary>
+        ///     Clears out the characters the server put in the lobby for show. They have no client
+        ///     behind them, so left in place they would be dealt roles and stand in the map as
+        ///     crewmates who never move and can never be voted out.
+        /// </summary>
+        /// <remarks>
+        ///     The host seat is deliberately left alone. It has no character of its own and the
+        ///     game still belongs to it.
+        /// </remarks>
+        private async ValueTask RemoveFakePlayersAsync()
+        {
+            var fakes = _players.Values
+                .Where(player => player.Client.Connection == null && player.Character != null)
+                .ToList();
+
+            foreach (var fake in fakes)
+            {
+                await DespawnCharacterAsync(fake);
+
+                // Tells the clients to forget them, and takes the PlayerInfo with it.
+                await HandleRemovePlayer(fake.Client.Id, DisconnectReason.ExitGame);
+
+                _logger.LogTrace("{Code} - Removed fake player {Name} for the game.", Code, fake.Client.Name);
+            }
+        }
+
+        /// <summary>
+        ///     Takes a player's character out of the world. Removing a player only despawns their
+        ///     PlayerInfo, which would leave the body behind.
+        /// </summary>
+        private async ValueTask DespawnCharacterAsync(ClientPlayer player)
+        {
+            if (player.Character is not { } character)
+            {
+                return;
+            }
+
+            await SendObjectDespawnAsync(character);
+
+            // Physics and the transform are registered alongside the control and have to go too.
+            foreach (var component in character.GetComponentsInChildren<InnerNetObject>())
+            {
+                RemoveNetObject(component);
+            }
+
+            player.Character = null;
         }
 
         /// <summary>

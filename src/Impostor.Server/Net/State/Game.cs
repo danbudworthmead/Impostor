@@ -139,9 +139,11 @@ namespace Impostor.Server.Net.State
             {
                 foreach (var player in _players.Values)
                 {
-                    if (GameNet.ShipStatus != null)
+                    // The server's own host seat has no character to place, so it is not a
+                    // question of whether one has spawned yet.
+                    if (GameNet.ShipStatus != null && player.Character != null)
                     {
-                        await player.Character!.NetworkTransform.SetPositionAsync(player, GameNet.ShipStatus.GetSpawnLocation(player.Character, PlayerCount, true));
+                        await player.Character.NetworkTransform.SetPositionAsync(player, GameNet.ShipStatus.GetSpawnLocation(player.Character, PlayerCount, true));
                     }
                 }
 
