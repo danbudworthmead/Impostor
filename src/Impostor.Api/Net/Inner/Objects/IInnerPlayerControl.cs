@@ -118,18 +118,28 @@ namespace Impostor.Api.Net.Inner.Objects
         /// </summary>
         /// <param name="role">The role to assign.</param>
         /// <param name="canOverrideRole">
-        /// Whether this may reassign a role the player already has one of. Leave false for the
-        /// very first role a player is given in a match. A client marks its role assignment final
-        /// the first time one arrives with this false - which is what a normal game start does -
-        /// and silently ignores every non-ghost SetRole after that unless this is true, including
-        /// the revive documented below: a client that never runs the code that revives a player
-        /// leaves them exactly as their murder left them, a ghost.
+        /// Passed through to the client unchanged. It does not do what it sounds like: a client
+        /// only ever accepts a role that is not itself a dead role (<see cref="RoleTypes.ImpostorGhost" />,
+        /// <see cref="RoleTypes.CrewmateGhost" />, <see cref="RoleTypes.GuardianAngel" />) the very
+        /// first time one arrives for that character, and this flag has no bearing on whether that
+        /// particular call counts as the first - it only controls whether THIS call itself gets to
+        /// count as final for any later one. In practice that makes it write-only: pass true for
+        /// the odd role that intentionally wants to be reassignable later (rare), and leave it
+        /// false for everything else, this included.
         /// </param>
         /// <remarks>
-        ///     Mirrors the client's own reaction to this RPC: assigning a role that is not one of
-        ///     the dead roles (<see cref="RoleTypes.ImpostorGhost" />, <see cref="RoleTypes.CrewmateGhost" />,
-        ///     <see cref="RoleTypes.GuardianAngel" />) to a player the server currently has marked
-        ///     dead revives them in place, exactly as it would if a host client did this.
+        ///     <para>
+        ///         Mirrors the client's own reaction to this RPC: assigning a role that is not one of
+        ///         the dead roles above to a player the server currently has marked dead revives them
+        ///         in place, exactly as it would if a host client did this.
+        ///     </para>
+        ///     <para>
+        ///         That revive only ever fires on a character's first role - see <paramref name="canOverrideRole" />
+        ///         above - so it cannot be used to change what a player already has a live role in;
+        ///         a player who was, say, dealt Crewmate at game start cannot later be turned into a
+        ///         live Impostor through this method, no matter what is passed here. See
+        ///         <see cref="IGame.RespawnCharacterAsync" /> for that case.
+        ///     </para>
         /// </remarks>
         /// <exception cref="ImpostorProtocolException">Thrown when player doesn't have a PlayerInfo.</exception>
         /// <returns>Task that must be awaited.</returns>

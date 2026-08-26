@@ -10,6 +10,7 @@ using Impostor.Api.Innersloth;
 using Impostor.Api.Innersloth.Customization;
 using Impostor.Api.Net;
 using Impostor.Api.Net.Inner;
+using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Unity;
 using Impostor.Hazel;
 using Impostor.Server.Events.Meeting;
@@ -687,6 +688,23 @@ namespace Impostor.Server.Net.State
             {
                 control.IsNew = false;
             }
+        }
+
+        public async ValueTask<IInnerPlayerControl?> RespawnCharacterAsync(IClientPlayer player)
+        {
+            var clientPlayer = (ClientPlayer)player;
+
+            if (clientPlayer.Character is not { } oldCharacter)
+            {
+                return null;
+            }
+
+            var position = oldCharacter.NetworkTransform.Position;
+
+            await DespawnCharacterAsync(clientPlayer);
+            await SpawnPlayerControlAsync(clientPlayer, position);
+
+            return clientPlayer.Character;
         }
 
         /// <summary>

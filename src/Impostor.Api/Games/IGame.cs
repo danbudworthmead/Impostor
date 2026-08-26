@@ -7,6 +7,7 @@ using Impostor.Api.Innersloth;
 using Impostor.Api.Innersloth.GameOptions;
 using Impostor.Api.Net;
 using Impostor.Api.Net.Inner;
+using Impostor.Api.Net.Inner.Objects;
 
 namespace Impostor.Api.Games
 {
@@ -89,6 +90,23 @@ namespace Impostor.Api.Games
         /// started. Any other lobby is begun by its host client instead.
         /// </remarks>
         ValueTask StartAsync();
+
+        /// <summary>
+        /// Replaces a player's character with a freshly spawned one in the same spot, dropping
+        /// whatever the old one had accumulated - its dead/ghost state very much included.
+        /// </summary>
+        /// <param name="player">The player whose character should be replaced.</param>
+        /// <returns>
+        /// The new character, or null if <paramref name="player" /> had none to replace (for
+        /// instance because it has not spawned yet, or already left).
+        /// </returns>
+        /// <remarks>
+        /// A client accepts a live (non-ghost) role for a character at most once, ever - see
+        /// <see cref="IInnerPlayerControl.SetRoleAsync" />'s remarks - so a murdered player's
+        /// existing character can never be turned into a working impostor, or anything else,
+        /// after the fact. A brand new character has not had that one chance used up yet.
+        /// </remarks>
+        ValueTask<IInnerPlayerControl?> RespawnCharacterAsync(IClientPlayer player);
 
         IClientPlayer? GetClientPlayer(int clientId);
 
