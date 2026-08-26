@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
+﻿namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 {
     public class HudOverrideSystemType : ISystemType, IActivatable
     {
@@ -8,7 +6,7 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 
         public void Serialize(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            writer.Write(IsActive);
         }
 
         public void Deserialize(IMessageReader reader, bool initialState)

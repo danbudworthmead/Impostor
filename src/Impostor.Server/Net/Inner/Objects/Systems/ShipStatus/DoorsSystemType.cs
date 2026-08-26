@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Impostor.Api.Innersloth;
 
@@ -16,7 +15,18 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 
         public void Serialize(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            writer.Write((byte)_timers.Count);
+
+            foreach (var (system, timer) in _timers)
+            {
+                writer.Write((byte)system);
+                writer.Write(timer);
+            }
+
+            for (var i = 0; i < _doors.Count; i++)
+            {
+                writer.Write(_doors[i]);
+            }
         }
 
         public void Deserialize(IMessageReader reader, bool initialState)

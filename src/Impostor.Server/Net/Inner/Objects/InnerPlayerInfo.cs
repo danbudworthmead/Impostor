@@ -212,7 +212,7 @@ namespace Impostor.Server.Net.Inner.Objects
             return true;
         }
 
-        private void SetTasks(ReadOnlyMemory<byte> taskTypeIds)
+        internal void SetTasks(ReadOnlyMemory<byte> taskTypeIds)
         {
             if (Disconnected)
             {

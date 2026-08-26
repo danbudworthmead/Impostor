@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 {
@@ -19,7 +18,13 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 
         public void Serialize(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            writer.Write(Countdown);
+            writer.WritePacked(CompletedConsoles.Count);
+
+            foreach (var console in CompletedConsoles)
+            {
+                writer.WritePacked(console);
+            }
         }
 
         public void Deserialize(IMessageReader reader, bool initialState)

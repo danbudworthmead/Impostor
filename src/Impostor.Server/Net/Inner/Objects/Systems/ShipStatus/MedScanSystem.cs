@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 {
@@ -14,7 +13,12 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 
         public void Serialize(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            writer.WritePacked(UsersList.Count);
+
+            foreach (var user in UsersList)
+            {
+                writer.Write(user);
+            }
         }
 
         public void Deserialize(IMessageReader reader, bool initialState)

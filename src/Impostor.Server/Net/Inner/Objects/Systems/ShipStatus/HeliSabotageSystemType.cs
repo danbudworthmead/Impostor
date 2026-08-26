@@ -24,7 +24,23 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 
         public void Serialize(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            writer.Write(Countdown);
+            writer.Write(Timer);
+
+            writer.WritePacked(ActiveConsoles.Count);
+
+            foreach (var (user, console) in ActiveConsoles)
+            {
+                writer.Write(user);
+                writer.Write(console);
+            }
+
+            writer.WritePacked(CompletedConsoles.Count);
+
+            foreach (var console in CompletedConsoles)
+            {
+                writer.Write(console);
+            }
         }
 
         public void Deserialize(IMessageReader reader, bool initialState)

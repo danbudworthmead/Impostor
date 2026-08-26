@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
+﻿namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 {
     public class SecurityCameraSystemType : ISystemType
     {
@@ -8,7 +6,8 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 
         public void Serialize(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            // The client writes the number of players watching, then one byte each.
+            writer.WritePacked(InUse);
         }
 
         public void Deserialize(IMessageReader reader, bool initialState)

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 {
@@ -14,7 +13,17 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 
         public void Serialize(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            if (!initialState)
+            {
+                // The server never opens or closes a door of its own accord, so nothing is dirty.
+                writer.WritePacked(0u);
+                return;
+            }
+
+            for (var i = 0; i < _doors.Count; i++)
+            {
+                writer.Write(_doors[i]);
+            }
         }
 
         public void Deserialize(IMessageReader reader, bool initialState)

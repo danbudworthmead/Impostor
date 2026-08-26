@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
+﻿namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 {
     public class SwitchSystem : ISystemType, IActivatable
     {
@@ -14,7 +12,9 @@ namespace Impostor.Server.Net.Inner.Objects.Systems.ShipStatus
 
         public void Serialize(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            writer.Write(ExpectedSwitches);
+            writer.Write(ActualSwitches);
+            writer.Write(Value);
         }
 
         public void Deserialize(IMessageReader reader, bool initialState)

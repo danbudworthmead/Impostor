@@ -42,7 +42,9 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
 
         internal override ValueTask OnSpawnAsync()
         {
-            for (var i = 0; i < Doors.Count; i++)
+            // Doors starts empty with room for this map's doors, so size the loop off the map
+            // rather than off the collection being filled.
+            for (var i = 0; i < Data.Doors.Count; i++)
             {
                 Doors.Add(i, false);
             }
@@ -55,7 +57,25 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
 
         public override ValueTask<bool> SerializeAsync(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            // One tagged sub-message per system, in enum order, exactly as the client writes it.
+            // Only the initial state is ever sent from here; the server does not track which
+            // systems have since gone dirty.
+            var wrote = false;
+
+            foreach (var type in Enum.GetValues<SystemTypes>())
+            {
+                if (!_systems.TryGetValue(type, out var system))
+                {
+                    continue;
+                }
+
+                wrote = true;
+                writer.StartMessage((byte)type);
+                system.Serialize(writer, initialState);
+                writer.EndMessage();
+            }
+
+            return new ValueTask<bool>(wrote);
         }
 
         public override async ValueTask DeserializeAsync(IClientPlayer sender, IClientPlayer? target, IMessageReader reader, bool initialState)

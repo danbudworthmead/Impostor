@@ -670,7 +670,6 @@ namespace Impostor.Server.Net.State
                 await control.NetworkTransform.SetPositionAsync(sender, position.Value);
             }
 
-            _logger.LogInformation("SPAWNDIAG PlayerControl client={ClientId} playerId={PlayerId} netId={NetId} owner={OwnerId} physics={PhysicsNetId} transform={TransformNetId} isNew={IsNew}", sender.Client.Id, control.PlayerId, control.NetId, control.OwnerId, control.Physics.NetId, control.NetworkTransform.NetId, control.IsNew);
             await OnSpawnAsync(sender, control);
             await SendObjectSpawnAsync(control);
 
@@ -836,7 +835,6 @@ namespace Impostor.Server.Net.State
                 return;
             }
 
-            _logger.LogInformation("SPAWNDIAG PlayerInfo client={ClientId} playerId={PlayerId} netId={NetId} owner={OwnerId} incomplete=name:{Name}/color:{Color}/hat:{Hat}/pet:{Pet}/skin:{Skin}/visor:{Visor}/plate:{Plate}", playerInfo.ClientId, playerInfo.PlayerId, playerInfo.NetId, playerInfo.OwnerId, playerInfo.CurrentOutfit.PlayerName, playerInfo.CurrentOutfit.Color, playerInfo.CurrentOutfit.HatId, playerInfo.CurrentOutfit.PetId, playerInfo.CurrentOutfit.SkinId, playerInfo.CurrentOutfit.VisorId, playerInfo.CurrentOutfit.NamePlateId);
             await OnSpawnAsync(sender, playerInfo);
             await SendObjectSpawnAsync(playerInfo);
         }
