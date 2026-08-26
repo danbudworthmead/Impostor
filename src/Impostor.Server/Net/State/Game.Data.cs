@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Impostor.Api;
 using Impostor.Api.Innersloth;
+using Impostor.Api.Innersloth.Customization;
 using Impostor.Api.Net;
 using Impostor.Api.Net.Inner;
 using Impostor.Api.Unity;
@@ -657,7 +658,7 @@ namespace Impostor.Server.Net.State
                 return;
             }
 
-            _logger.LogTrace("Spawning PlayerControl for client {ClientId} (netId {NetId})", sender.Client.Id, control.NetId);
+            _logger.LogInformation("SPAWNDIAG PlayerControl client={ClientId} playerId={PlayerId} netId={NetId} owner={OwnerId} physics={PhysicsNetId} transform={TransformNetId} isNew={IsNew}", sender.Client.Id, control.PlayerId, control.NetId, control.OwnerId, control.Physics.NetId, control.NetworkTransform.NetId, control.IsNew);
             await OnSpawnAsync(sender, control);
             await SendObjectSpawnAsync(control);
 
@@ -745,6 +746,24 @@ namespace Impostor.Server.Net.State
             return player;
         }
 
+        /// <summary>
+        ///     Picks a colour nobody in the lobby is wearing, so a virtual player does not turn up
+        ///     as somebody else's twin.
+        /// </summary>
+        /// <returns>An unused colour, or red if every one is taken.</returns>
+        private ColorType FirstUnusedColor()
+        {
+            foreach (var color in Enum.GetValues<ColorType>())
+            {
+                if (!IsColorUsed(color))
+                {
+                    return color;
+                }
+            }
+
+            return ColorType.Red;
+        }
+
         private async ValueTask SpawnPlayerInfoAsync(ClientPlayer sender)
         {
             // Hosts spawn PlayerInfo objects if they requested authority
@@ -779,6 +798,24 @@ namespace Impostor.Server.Net.State
                 playerInfo.CurrentOutfit.Color = prevColor.Value;
             }
 
+            // A real player's own client announces its cosmetics the moment its character spawns.
+            // A virtual player has nobody to do that, and the game treats an outfit with an empty
+            // name, no colour, or any cosmetic still set to "missing" as incomplete: every client
+            // that can see one disconnects itself thirty seconds later. So dress it here, before
+            // the spawn goes out.
+            if (sender.Client.Connection == null)
+            {
+                var outfit = playerInfo.CurrentOutfit;
+
+                outfit.PlayerName = sender.Client.Name;
+                outfit.Color = FirstUnusedColor();
+                outfit.HatId = "hat_NoHat";
+                outfit.PetId = "pet_EmptyPet";
+                outfit.SkinId = "skin_None";
+                outfit.VisorId = "visor_EmptyVisor";
+                outfit.NamePlateId = "nameplate_NoPlate";
+            }
+
             if (!AddNetObject(playerInfo))
             {
                 _logger.LogError("Couldn't spawn PlayerInfo for {Name} ({ClientId})", sender.Client.Name, sender.Client.Id);
@@ -786,7 +823,7 @@ namespace Impostor.Server.Net.State
                 return;
             }
 
-            _logger.LogTrace("Spawning PlayerInfo (netId {Netid})", playerInfo.NetId);
+            _logger.LogInformation("SPAWNDIAG PlayerInfo client={ClientId} playerId={PlayerId} netId={NetId} owner={OwnerId} incomplete=name:{Name}/color:{Color}/hat:{Hat}/pet:{Pet}/skin:{Skin}/visor:{Visor}/plate:{Plate}", playerInfo.ClientId, playerInfo.PlayerId, playerInfo.NetId, playerInfo.OwnerId, playerInfo.CurrentOutfit.PlayerName, playerInfo.CurrentOutfit.Color, playerInfo.CurrentOutfit.HatId, playerInfo.CurrentOutfit.PetId, playerInfo.CurrentOutfit.SkinId, playerInfo.CurrentOutfit.VisorId, playerInfo.CurrentOutfit.NamePlateId);
             await OnSpawnAsync(sender, playerInfo);
             await SendObjectSpawnAsync(playerInfo);
         }
