@@ -48,9 +48,9 @@ namespace Impostor.Server.Net.Inner.Objects
             PlayerId = byte.MaxValue;
         }
 
-        public bool IsNew { get; private set; }
+        public bool IsNew { get; internal set; }
 
-        public byte PlayerId { get; private set; }
+        public byte PlayerId { get; internal set; }
 
         public InnerPlayerPhysics Physics { get; }
 
@@ -87,7 +87,14 @@ namespace Impostor.Server.Net.Inner.Objects
 
         public override ValueTask<bool> SerializeAsync(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            // Mirrors DeserializeAsync below, which is the shape the client expects.
+            if (initialState)
+            {
+                writer.Write(IsNew);
+            }
+
+            writer.Write(PlayerId);
+            return new ValueTask<bool>(true);
         }
 
         public override async ValueTask DeserializeAsync(IClientPlayer sender, IClientPlayer? target, IMessageReader reader, bool initialState)

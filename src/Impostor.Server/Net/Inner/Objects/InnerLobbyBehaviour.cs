@@ -16,7 +16,8 @@ namespace Impostor.Server.Net.Inner.Objects
 
         public override ValueTask<bool> SerializeAsync(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            // LobbyBehaviour carries no state; the client writes nothing for it either.
+            return new ValueTask<bool>(false);
         }
 
         public override ValueTask DeserializeAsync(IClientPlayer sender, IClientPlayer? target, IMessageReader reader, bool initialState)

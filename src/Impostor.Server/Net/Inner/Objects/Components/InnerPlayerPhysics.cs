@@ -27,7 +27,8 @@ namespace Impostor.Server.Net.Inner.Objects.Components
 
         public override ValueTask<bool> SerializeAsync(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            // PlayerPhysics carries no spawn state; the client writes nothing for it either.
+            return new ValueTask<bool>(false);
         }
 
         public override ValueTask DeserializeAsync(IClientPlayer sender, IClientPlayer? target, IMessageReader reader, bool initialState)

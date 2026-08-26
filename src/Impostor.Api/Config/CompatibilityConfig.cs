@@ -20,6 +20,6 @@ namespace Impostor.Api.Config
         /// play correctly until the server implements all of them. Off by default; games only
         /// opt in individually, see IGame.IsServerHosted.
         /// </remarks>
-        public bool AllowServerAsHost { get; set; } = false;
+        public bool AllowServerAsHost { get; set; } = true;
     }
 }

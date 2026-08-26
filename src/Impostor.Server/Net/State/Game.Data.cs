@@ -271,8 +271,20 @@ namespace Impostor.Server.Net.State
 
                         _logger.LogTrace("> Scene {0} to {1}", clientId, sender.Scene);
 
+                        // When the server is host it has to build the scene the player arrives
+                        // into, and then give them a character to control.
+                        if (IsServerHosted)
+                        {
+                            await EnsureLobbyBehaviourAsync();
+                        }
+
                         await SyncServerObjectsAsync(sender);
                         await SpawnPlayerInfoAsync(sender);
+
+                        if (IsServerHosted)
+                        {
+                            await SpawnPlayerControlAsync(sender);
+                        }
 
                         break;
                     }
@@ -469,12 +481,104 @@ namespace Impostor.Server.Net.State
         {
             foreach (var obj in _allObjects.Values)
             {
-                if (obj.OwnerId == ServerOwned)
+                // Components are registered individually so their RPCs resolve, but they travel
+                // inside their parent's spawn message. Only spawn roots are sent.
+                if (!SpawnableObjectIds.ContainsKey(obj.GetType()))
+                {
+                    continue;
+                }
+
+                // Normally the host client tells a newcomer about everyone else's objects. When
+                // the server is host nobody else will, so send those too. The player's own
+                // character is spawned separately, right after this.
+                var isOwnedByAnotherPlayer = IsServerHosted && obj.OwnerId != sender.Client.Id;
+
+                if (obj.OwnerId == ServerOwned || isOwnedByAnotherPlayer)
                 {
                     _logger.LogTrace("Syncing {Type} {NetId}", obj.GetType(), obj.NetId);
                     await SendObjectSpawnAsync(obj, sender.Client.Id);
                 }
             }
+        }
+
+        /// <summary>
+        ///     Gives a server created object and each of its components their own network id and
+        ///     registers them, mirroring how ids arrive when a host client spawns something.
+        /// </summary>
+        private bool RegisterServerObject(InnerNetObject obj, int ownerId)
+        {
+            foreach (var component in obj.GetComponentsInChildren<InnerNetObject>())
+            {
+                component.NetId = _nextNetId++;
+                component.OwnerId = ownerId;
+
+                if (!AddNetObject(component))
+                {
+                    _logger.LogError("Couldn't register {Type} while spawning it server side", component.GetType().Name);
+                    component.NetId = uint.MaxValue;
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Creates the lobby players stand in. A host client spawns this when it reaches the
+        ///     lobby scene, so when the server is host nobody would otherwise create it.
+        /// </summary>
+        private async ValueTask EnsureLobbyBehaviourAsync()
+        {
+            if (GameNet.LobbyBehaviour != null || GameState != GameStates.NotStarted)
+            {
+                return;
+            }
+
+            var lobby = (InnerLobbyBehaviour)ActivatorUtilities.CreateInstance(_serviceProvider, typeof(InnerLobbyBehaviour), this);
+            lobby.SpawnFlags = SpawnFlags.None;
+
+            if (!RegisterServerObject(lobby, ServerOwned))
+            {
+                return;
+            }
+
+            GameNet.LobbyBehaviour = lobby;
+
+            _logger.LogTrace("Spawning LobbyBehaviour (netId {NetId})", lobby.NetId);
+            await SendObjectSpawnAsync(lobby);
+        }
+
+        /// <summary>
+        ///     Creates a player's character, which a host client would normally spawn on their
+        ///     behalf. It is owned by that player so they keep control of their own movement.
+        /// </summary>
+        private async ValueTask SpawnPlayerControlAsync(ClientPlayer sender)
+        {
+            if (sender.Character != null)
+            {
+                return;
+            }
+
+            // The character is matched to its PlayerInfo by player id, so that must exist first.
+            if (!GameNet.GameData.PlayersByClientId.TryGetValue(sender.Client.Id, out var playerInfo))
+            {
+                _logger.LogWarning("No PlayerInfo to attach a character to for client {ClientId}", sender.Client.Id);
+                return;
+            }
+
+            var control = (InnerPlayerControl)ActivatorUtilities.CreateInstance(_serviceProvider, typeof(InnerPlayerControl), this);
+            control.SpawnFlags = SpawnFlags.IsClientCharacter;
+            control.IsNew = true;
+            control.PlayerId = playerInfo.PlayerId;
+
+            if (!RegisterServerObject(control, sender.Client.Id))
+            {
+                return;
+            }
+
+            _logger.LogTrace("Spawning PlayerControl for client {ClientId} (netId {NetId})", sender.Client.Id, control.NetId);
+            await OnSpawnAsync(sender, control);
+            await SendObjectSpawnAsync(control);
         }
 
         private async ValueTask SpawnPlayerInfoAsync(ClientPlayer sender)
