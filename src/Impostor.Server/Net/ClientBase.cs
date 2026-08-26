@@ -11,7 +11,7 @@ namespace Impostor.Server.Net
 {
     internal abstract class ClientBase : IClient
     {
-        // connection is null only for ServerHostClient, which exists purely inside the server.
+        // connection is null only for VirtualClient, which exists purely inside the server.
         protected ClientBase(string name, GameVersion gameVersion, Language language, QuickChatModes chatMode, PlatformSpecificData platformSpecificData, IHazelConnection? connection)
         {
             Name = name;

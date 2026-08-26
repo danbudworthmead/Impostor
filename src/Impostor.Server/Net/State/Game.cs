@@ -91,10 +91,11 @@ namespace Impostor.Server.Net.State
         public IDictionary<object, object> Items { get; }
 
         /// <summary>
-        ///     Gets the number of real players in the game. The server host, when there is one,
-        ///     is not a player and must not count towards lobby size or the public listing.
+        ///     Gets the number of people actually connected to the game. Virtual players such as
+        ///     the server host or a puppeted character are not people and must not count towards
+        ///     lobby size, the public listing, or whether the game is empty enough to tear down.
         /// </summary>
-        public int PlayerCount => ServerHost != null ? _players.Count - 1 : _players.Count;
+        public int PlayerCount => _players.Count(p => p.Value.Client.Connection != null);
 
         public ClientPlayer? Host => _players.GetValueOrDefault(HostId);
 

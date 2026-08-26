@@ -30,7 +30,7 @@ namespace Impostor.Server.Net.State
 
             // Adopt the creating player's version. Joining clients are checked against the host's
             // version, so a synthetic one here would lock everybody out of the lobby.
-            var client = new ServerHostClient(_clientManager.NextId(), owner.GameVersion);
+            var client = new VirtualClient(_clientManager.NextId(), VirtualClient.HostName, owner.GameVersion);
             var player = new ClientPlayer(
                 _serviceProvider.GetRequiredService<ILogger<ClientPlayer>>(),
                 client,

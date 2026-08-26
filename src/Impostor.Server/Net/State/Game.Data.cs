@@ -5,8 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Impostor.Api;
 using Impostor.Api.Innersloth;
+using Impostor.Api.Net;
 using Impostor.Api.Net.Inner;
 using Impostor.Api.Unity;
+using Impostor.Hazel;
 using Impostor.Server.Events.Meeting;
 using Impostor.Server.Events.Player;
 using Impostor.Server.Net.Inner;
@@ -658,6 +660,58 @@ namespace Impostor.Server.Net.State
             // would make each new arrival watch everybody respawn and snap away from where they
             // actually are.
             control.IsNew = false;
+        }
+
+        /// <summary>
+        ///     Adds a character to the lobby that no client is behind. It is backed by a
+        ///     <see cref="VirtualClient" />, so ownership checks on incoming rpcs name a client
+        ///     that never sends anything, and no real player can move it or act as it.
+        /// </summary>
+        /// <param name="name">Name to show above the character.</param>
+        /// <returns>The player that was added, or null if one could not be.</returns>
+        public async ValueTask<IClientPlayer?> SpawnFakePlayerAsync(string name)
+        {
+            if (!IsServerHosted || GameState != GameStates.NotStarted)
+            {
+                return null;
+            }
+
+            // Match the lobby's version so nothing downstream treats it as a mixed-version game.
+            var version = Host?.Client.GameVersion ?? default;
+            var client = new VirtualClient(_clientManager.NextId(), name, version);
+
+            var player = new ClientPlayer(
+                _serviceProvider.GetRequiredService<ILogger<ClientPlayer>>(),
+                client,
+                this,
+                _timeoutConfig.SpawnTimeout);
+
+            player.DisableSpawnTimeout();
+            player.Limbo = LimboStates.NotLimbo;
+            client.Player = player;
+
+            await PlayerAdd(player);
+
+            // Everyone needs a client entry for it before its objects mean anything to them.
+            using (var message = MessageWriter.Get(MessageType.Reliable))
+            {
+                await BroadcastJoinMessage(message, true, player);
+            }
+
+            await SpawnPlayerInfoAsync(player);
+            await SpawnPlayerControlAsync(player);
+
+            if (player.Character == null)
+            {
+                _logger.LogWarning("{Code} - Could not give the fake player {Name} a character.", Code, name);
+                return null;
+            }
+
+            // Nobody will send a CheckName for it, so apply the name directly.
+            await player.Character.SetNameAsync(name);
+
+            _logger.LogInformation("{Code} - Spawned fake player {Name} (client id {ClientId}).", Code, name, client.Id);
+            return player;
         }
 
         private async ValueTask SpawnPlayerInfoAsync(ClientPlayer sender)

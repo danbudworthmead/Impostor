@@ -63,6 +63,18 @@ namespace Impostor.Api.Games
         /// </summary>
         Guid? ModGuid { get; }
 
+        /// <summary>
+        /// Adds a character to the lobby that no client is behind, visible to everyone but
+        /// controlled by nobody.
+        /// </summary>
+        /// <param name="name">Name to show above the character.</param>
+        /// <returns>The player that was added, or null if one could not be.</returns>
+        /// <remarks>
+        /// Only works while <see cref="IsServerHosted" /> is true and the game has not started,
+        /// because a real host client would immediately fight the server over the character.
+        /// </remarks>
+        ValueTask<IClientPlayer?> SpawnFakePlayerAsync(string name);
+
         IClientPlayer? GetClientPlayer(int clientId);
 
         T? FindObjectByNetId<T>(uint netId)
