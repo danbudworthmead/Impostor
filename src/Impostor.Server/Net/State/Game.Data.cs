@@ -651,6 +651,13 @@ namespace Impostor.Server.Net.State
             _logger.LogTrace("Spawning PlayerControl for client {ClientId} (netId {NetId})", sender.Client.Id, control.NetId);
             await OnSpawnAsync(sender, control);
             await SendObjectSpawnAsync(control);
+
+            // IsNew makes the client play the join animation and drop the player at the lobby
+            // spawn point, which is right the first time everyone is told about them. This same
+            // object is serialized again for every later joiner though, so leaving the flag set
+            // would make each new arrival watch everybody respawn and snap away from where they
+            // actually are.
+            control.IsNew = false;
         }
 
         private async ValueTask SpawnPlayerInfoAsync(ClientPlayer sender)
