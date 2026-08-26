@@ -654,12 +654,20 @@ namespace Impostor.Server.Net.State
             await OnSpawnAsync(sender, control);
             await SendObjectSpawnAsync(control);
 
-            // IsNew makes the client play the join animation and drop the player at the lobby
-            // spawn point, which is right the first time everyone is told about them. This same
-            // object is serialized again for every later joiner though, so leaving the flag set
-            // would make each new arrival watch everybody respawn and snap away from where they
-            // actually are.
-            control.IsNew = false;
+            // IsNew makes the client seat the player using the lobby's spawn positions, which
+            // only exist client side, and play the join animation.
+            //
+            // For a real player that is right once: their position is tracked from their own
+            // movement updates afterwards, so later joiners can be told where they actually are.
+            // Leaving the flag set would make every new arrival watch the whole lobby respawn
+            // and snap away from where they were standing.
+            //
+            // A virtual player never moves and the server has no position for it, so it stays
+            // new. Otherwise it would arrive at the origin, out of sight.
+            if (sender.Client.Connection != null)
+            {
+                control.IsNew = false;
+            }
         }
 
         /// <summary>
