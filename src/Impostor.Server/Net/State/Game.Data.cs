@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Impostor.Api;
 using Impostor.Api.Innersloth;
@@ -62,6 +63,12 @@ namespace Impostor.Server.Net.State
         };
 
         private static readonly Dictionary<Type, uint> SpawnableObjectIds = SpawnableObjects.ToDictionary((i) => i.Value, (i) => i.Key);
+
+        /// <summary>
+        ///     TextMeshPro markup, which the client renders in a name above a character but which
+        ///     has no business in the protocol fields that also carry a name.
+        /// </summary>
+        private static readonly Regex MarkupPattern = new("<.*?>", RegexOptions.Compiled);
 
         private readonly ConcurrentDictionary<uint, InnerNetObject> _allObjects = new ConcurrentDictionary<uint, InnerNetObject>();
 
@@ -684,9 +691,25 @@ namespace Impostor.Server.Net.State
                 return null;
             }
 
+            // A client name travels in JoinedGame and, as the platform name, in the reply to
+            // QueryPlatformIds. Those fields only ever carry the ten plain characters a real
+            // client is limited to, so strip the markup here and let the character below wear
+            // the decorated version.
+            static string ToClientName(string displayName)
+            {
+                var plain = MarkupPattern.Replace(displayName, string.Empty).Trim();
+
+                if (plain.Length == 0)
+                {
+                    plain = "player";
+                }
+
+                return plain.Length > 10 ? plain[..10] : plain;
+            }
+
             // Match the lobby's version so nothing downstream treats it as a mixed-version game.
             var version = Host?.Client.GameVersion ?? default;
-            var client = new VirtualClient(_clientManager.NextId(), name, version);
+            var client = new VirtualClient(_clientManager.NextId(), ToClientName(name), version);
 
             var player = new ClientPlayer(
                 _serviceProvider.GetRequiredService<ILogger<ClientPlayer>>(),
