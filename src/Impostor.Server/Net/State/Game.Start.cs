@@ -143,7 +143,16 @@ namespace Impostor.Server.Net.State
         /// </remarks>
         private async ValueTask SpawnRoleAnchorAsync()
         {
-            await SpawnFakePlayerCoreAsync(string.Empty, new Vector2(0f, -1000f));
+            // Position travels over the wire as a ushort lerped across a fixed -50..50 range
+            // (NetHelpers.XRange/YRange on the client); anything outside that band does not
+            // clamp, it wraps, and hands the client a garbage position instead of this one.
+            var anchor = await SpawnFakePlayerCoreAsync(string.Empty, new Vector2(45f, 45f));
+
+            _logger.LogInformation(
+                "{Code} - ANCHORDIAG spawn {Result}, character {HasCharacter}",
+                Code,
+                anchor != null ? "ok" : "FAILED",
+                anchor?.Character != null);
         }
 
         /// <summary>
