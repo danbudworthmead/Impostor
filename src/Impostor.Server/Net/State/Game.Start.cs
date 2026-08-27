@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Threading.Tasks;
 using Impostor.Api.Innersloth;
 using Impostor.Api.Innersloth.GameOptions;
 using Impostor.Api.Innersloth.Maps;
 using Impostor.Api.Net.Inner;
-using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Net.Messages;
 using Impostor.Api.Net.Messages.Rpcs;
 using Impostor.Hazel;
@@ -91,18 +89,6 @@ namespace Impostor.Server.Net.State
             }
 
             await StartedAsync();
-
-            // Delayed and fire-and-forget: the round-opening cutscene this is meant to guard
-            // against re-triggering is itself still playing out on every client for a few seconds
-            // after this point, and a new character arriving mid-cutscene is not something any of
-            // this has been exercised against. Nothing before the first real murder needs the
-            // anchor to exist yet, so there is no reason to hold up the rest of the start sequence
-            // for it, or to risk colliding with the one moment it exists to protect.
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(TimeSpan.FromSeconds(10));
-                await SpawnRoleAnchorAsync();
-            });
         }
 
         private static List<TaskData> Shuffle(IEnumerable<TaskData> tasks)
@@ -131,39 +117,6 @@ namespace Impostor.Server.Net.State
                 usedTypes.Add(task.Type);
                 assigned.Add((byte)task.Id);
             }
-        }
-
-        /// <summary>
-        ///     Leaves one character in the game that is never given a role, for the rest of the
-        ///     match.
-        /// </summary>
-        /// <remarks>
-        ///     <para>
-        ///         A client replays the entire round-opening cutscene - full black screen, camera
-        ///         lock, sabotage cooldowns reset, <c>GameManager.StartGame()</c> called again -
-        ///         the moment every character it knows about has been given a role at least once.
-        ///         That is meant to catch exactly one moment: the tail end of the real, once-only
-        ///         role assignment above. It cannot tell that moment apart from any other, so
-        ///         without a permanent holdout, a client hits it again and replays the whole thing
-        ///         every time <see cref="IInnerPlayerControl.SetRoleAsync" /> is used afterward
-        ///         (Zombies, notably, on every infection) - which reads as the game restarting.
-        ///     </para>
-        ///     <para>
-        ///         Placed well outside the map, so nothing places a real player anywhere near it.
-        ///     </para>
-        /// </remarks>
-        private async ValueTask SpawnRoleAnchorAsync()
-        {
-            // Position travels over the wire as a ushort lerped across a fixed -50..50 range
-            // (NetHelpers.XRange/YRange on the client); anything outside that band does not
-            // clamp, it wraps, and hands the client a garbage position instead of this one.
-            var anchor = await SpawnFakePlayerCoreAsync(string.Empty, new Vector2(45f, 45f));
-
-            _logger.LogInformation(
-                "{Code} - ANCHORDIAG spawn {Result}, character {HasCharacter}",
-                Code,
-                anchor != null ? "ok" : "FAILED",
-                anchor?.Character != null);
         }
 
         /// <summary>
