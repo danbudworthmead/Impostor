@@ -712,10 +712,38 @@ namespace Impostor.Server.Net.State
 
             var position = oldCharacter.NetworkTransform.Position;
 
+            await InvalidatePlayerIdAsync(oldCharacter);
             await DespawnCharacterAsync(clientPlayer);
             await SpawnPlayerControlAsync(clientPlayer, position, isRespawn: true);
 
             return clientPlayer.Character;
+        }
+
+        /// <summary>
+        ///     Resets a character's PlayerId to the "none assigned yet" sentinel every fresh
+        ///     InnerPlayerControl already starts at, and re-syncs that to every client.
+        /// </summary>
+        /// <remarks>
+        ///     A client looks up which character belongs to which player purely by matching
+        ///     PlayerId against its own AllPlayerControls list, and never expects two characters
+        ///     to carry the same one at once. Its own owned character is one it never destroys on
+        ///     an incoming despawn - no client normally expects the server to despawn something it
+        ///     owns in the first place - so a plain respawn leaves the old character lingering
+        ///     there with the new one's PlayerId, and the client can resolve "who owns PlayerId N"
+        ///     to whichever of the two it finds first. Clearing the old one's PlayerId here removes
+        ///     it from that pool before the new one ever claims the same id, regardless of which
+        ///     one a lookup would otherwise have preferred.
+        /// </remarks>
+        private async ValueTask InvalidatePlayerIdAsync(InnerPlayerControl character)
+        {
+            character.PlayerId = byte.MaxValue;
+
+            using var writer = StartGameData();
+            writer.StartMessage(GameDataTag.DataFlag);
+            writer.WritePacked(character.NetId);
+            await character.SerializeAsync(writer, false);
+            writer.EndMessage();
+            await FinishGameDataAsync(writer);
         }
 
         /// <summary>
