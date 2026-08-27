@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Impostor.Api;
+using Impostor.Api.Games;
 using Impostor.Api.Innersloth;
 using Impostor.Api.Innersloth.Customization;
 using Impostor.Api.Net;
@@ -732,6 +733,18 @@ namespace Impostor.Server.Net.State
                 return null;
             }
 
+            return await SpawnFakePlayerCoreAsync(name, position);
+        }
+
+        /// <summary>
+        ///     Adds a character nothing real is behind, the same way <see cref="SpawnFakePlayerAsync" />
+        ///     does, but without insisting the lobby is still a lobby. Only ever meant for the
+        ///     server's own internal bookkeeping mid-game - see <see cref="AssignRolesAsync" />'s
+        ///     caller for the one thing that currently needs it - never for a plugin's use, which is
+        ///     exactly why it stays off <see cref="IGame" />.
+        /// </summary>
+        private async ValueTask<IClientPlayer?> SpawnFakePlayerCoreAsync(string name, Vector2? position)
+        {
             // A client name travels in JoinedGame and, as the platform name, in the reply to
             // QueryPlatformIds. Those fields only ever carry the ten plain characters a real
             // client is limited to, so strip the markup here and let the character below wear
