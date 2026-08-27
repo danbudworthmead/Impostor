@@ -82,7 +82,6 @@ namespace Impostor.Server.Net.State
 
             await AssignRolesAsync();
             await AssignTasksAsync();
-            await SpawnRoleAnchorAsync();
 
             // Characters the server owns will never announce themselves ready, and every client
             // waits for all of them before it will play.
@@ -92,6 +91,18 @@ namespace Impostor.Server.Net.State
             }
 
             await StartedAsync();
+
+            // Delayed and fire-and-forget: the round-opening cutscene this is meant to guard
+            // against re-triggering is itself still playing out on every client for a few seconds
+            // after this point, and a new character arriving mid-cutscene is not something any of
+            // this has been exercised against. Nothing before the first real murder needs the
+            // anchor to exist yet, so there is no reason to hold up the rest of the start sequence
+            // for it, or to risk colliding with the one moment it exists to protect.
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(10));
+                await SpawnRoleAnchorAsync();
+            });
         }
 
         private static List<TaskData> Shuffle(IEnumerable<TaskData> tasks)
