@@ -108,6 +108,24 @@ namespace Impostor.Api.Games
         /// </remarks>
         ValueTask<IInnerPlayerControl?> RespawnCharacterAsync(IClientPlayer player);
 
+        /// <summary>
+        /// Marks the round over and returns the lobby to a joinable state: despawns every
+        /// <c>PlayerInfo</c>, puts every player in the limbo a fresh join expects, and raises
+        /// the game-ended event. Safe to call more than once for the same round - every call
+        /// after the first is a no-op.
+        /// </summary>
+        /// <param name="gameOverReason">Reason recorded on the game-ended event.</param>
+        /// <remarks>
+        /// This does not itself tell clients the round ended - a real host's own EndGame
+        /// request already carries that message, and a server-hosted game has no host client to
+        /// carry it, so callers there send whatever they need to players themselves (which,
+        /// notably, can differ per recipient - the vanilla protocol has no way to broadcast a
+        /// win to one team and a loss to another in a single message). Call this once whatever
+        /// you needed to tell clients has been sent, so a rejoin after the round is over is not
+        /// rejected as joining a game that already started.
+        /// </remarks>
+        ValueTask EndGameAsync(GameOverReason gameOverReason);
+
         IClientPlayer? GetClientPlayer(int clientId);
 
         T? FindObjectByNetId<T>(uint netId)
