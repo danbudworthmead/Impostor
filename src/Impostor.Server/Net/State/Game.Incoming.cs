@@ -60,6 +60,14 @@ namespace Impostor.Server.Net.State
                 await DespawnPlayerInfoAsync(playerInfo);
             }
 
+            // A real host's own client takes the map down itself as part of ending a round, and
+            // Impostor just relays whatever message that produces - it never has to initiate this
+            // on its own. A server-hosted game has no host client to do that.
+            if (IsServerHosted)
+            {
+                await DespawnShipStatusAsync();
+            }
+
             await _eventManager.CallAsync(new GameEndedEvent(this, gameOverReason));
         }
 

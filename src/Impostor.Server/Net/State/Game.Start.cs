@@ -187,6 +187,34 @@ namespace Impostor.Server.Net.State
         }
 
         /// <summary>
+        ///     Takes the map away: every door, every completed task, every dead body, gone.
+        /// </summary>
+        /// <remarks>
+        ///     A real host's own client manages this on its own initiative as part of ending a
+        ///     round - despawning the map is just one more message it happens to send, which
+        ///     Impostor relays like anything else a host sends, never having to think about the
+        ///     map's lifecycle itself. A server-hosted game has no host client to do that, so left
+        ///     alone the map just sits there fully spawned in behind whatever comes next - which is
+        ///     exactly what a rejoin after a round ended showed: the lobby's own UI drawn over a
+        ///     map that had never actually gone anywhere. Only ever meant for that case; see the
+        ///     call site.
+        /// </remarks>
+        private async ValueTask DespawnShipStatusAsync()
+        {
+            if (GameNet.ShipStatus is not { } ship)
+            {
+                return;
+            }
+
+            await SendObjectDespawnAsync(ship);
+
+            RemoveNetObject(ship);
+            GameNet.ShipStatus = null;
+
+            _logger.LogTrace("{Code} - Despawned {Map} (netId {NetId})", Code, Options.Map, ship.NetId);
+        }
+
+        /// <summary>
         ///     Builds the map for the lobby's chosen map type.
         /// </summary>
         /// <returns>True if the map is now present.</returns>

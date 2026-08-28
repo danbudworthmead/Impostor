@@ -117,12 +117,20 @@ namespace Impostor.Tests.Net
             await game.StartAsync();
 
             Assert.Equal(GameStates.Started, game.GameState);
+            Assert.NotNull(game.GameNet.ShipStatus);
 
             await game.EndGameAsync(GameOverReason.ImpostorsByKill);
 
             Assert.Equal(GameStates.Ended, game.GameState);
             Assert.Equal(1, listener.CallCount);
             Assert.Equal(GameOverReason.ImpostorsByKill, listener.LastReason);
+
+            // The map itself: a real host despawns this on its own initiative when a round ends,
+            // and Impostor just relays that. A server-hosted game has no host client to do it, so
+            // this has to take the map down itself - see DespawnShipStatusAsync's remarks for the
+            // symptom leaving it spawned in produced (a rejoin drawing the lobby over a map that
+            // never actually left).
+            Assert.Null(game.GameNet.ShipStatus);
 
             // The plugin calls this once per player it sends its own EndGame message to, since
             // the wire protocol has no single broadcast for "different reason per recipient". A
