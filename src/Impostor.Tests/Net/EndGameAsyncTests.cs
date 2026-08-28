@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Threading.Tasks;
 using Impostor.Api.Config;
 using Impostor.Api.Events;
@@ -114,6 +115,10 @@ namespace Impostor.Tests.Net
                 GameFilterOptions.CreateDefault()))!;
 
             await game.InitializeServerHostAsync(new TestOwnerClient());
+
+            var player = await game.SpawnFakePlayerAsync("Player", new Vector2(1f, 1f));
+            Assert.NotNull(player!.Character);
+
             await game.StartAsync();
 
             Assert.Equal(GameStates.Started, game.GameState);
@@ -131,6 +136,11 @@ namespace Impostor.Tests.Net
             // symptom leaving it spawned in produced (a rejoin drawing the lobby over a map that
             // never actually left).
             Assert.Null(game.GameNet.ShipStatus);
+
+            // Every player's character too - left in place, SpawnPlayerControlAsync's own "already
+            // has one" guard would make the next round reuse it, PlayerId and all, against a fresh
+            // PlayerInfo that was never guaranteed to carry the same one.
+            Assert.Null(player.Character);
 
             // The plugin calls this once per player it sends its own EndGame message to, since
             // the wire protocol has no single broadcast for "different reason per recipient". A

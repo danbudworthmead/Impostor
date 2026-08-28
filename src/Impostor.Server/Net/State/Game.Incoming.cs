@@ -54,6 +54,23 @@ namespace Impostor.Server.Net.State
                 player.Value.Limbo = LimboStates.PreSpawn;
             }
 
+            // A real host's own client despawns every player's character itself as part of ending
+            // a round, and Impostor just relays whatever messages that produces - it never has to
+            // initiate this on its own. A server-hosted game has no host client to do that, and
+            // leaving a character in place is worse than leaving the map in place: the next round
+            // spawns a fresh PlayerInfo for everyone, but SpawnPlayerControlAsync refuses to touch
+            // a player who already has a character, so they would go into the new round wearing
+            // whatever PlayerId their old one happened to carry rather than the one that actually
+            // matches their new PlayerInfo - precisely the mismatch RespawnCharacterAsync's own
+            // remarks describe, just reached by an untouched character instead of a respawned one.
+            if (IsServerHosted)
+            {
+                foreach (var player in _players.Values)
+                {
+                    await DespawnCharacterAsync(player);
+                }
+            }
+
             // Delete all PlayerInfo objects
             foreach (var playerInfo in GameNet.GameData.Players.Values.ToArray())
             {
