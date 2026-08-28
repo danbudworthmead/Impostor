@@ -115,6 +115,7 @@ namespace Impostor.Api.Games
         /// after the first is a no-op.
         /// </summary>
         /// <param name="gameOverReason">Reason recorded on the game-ended event.</param>
+        /// <returns>A <see cref="ValueTask" /> representing the asynchronous operation.</returns>
         /// <remarks>
         /// This does not itself tell clients the round ended - a real host's own EndGame
         /// request already carries that message, and a server-hosted game has no host client to
