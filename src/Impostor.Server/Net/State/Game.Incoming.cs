@@ -263,6 +263,7 @@ namespace Impostor.Server.Net.State
             if (IsServerHosted)
             {
                 GameState = GameStates.NotStarted;
+                await _eventManager.CallAsync(new GameReopenedEvent(this));
                 await HandleJoinGameNew(sender, false);
                 await CheckLimboPlayers();
                 return;
@@ -272,6 +273,7 @@ namespace Impostor.Server.Net.State
             if (sender.Client.Id == HostId)
             {
                 GameState = GameStates.NotStarted;
+                await _eventManager.CallAsync(new GameReopenedEvent(this));
 
                 // Spawn the host.
                 await HandleJoinGameNew(sender, false);

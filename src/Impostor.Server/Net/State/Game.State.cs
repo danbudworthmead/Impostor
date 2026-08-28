@@ -168,6 +168,7 @@ namespace Impostor.Server.Net.State
             if (GameState == GameStates.Ended && host.Limbo == LimboStates.WaitingForHost)
             {
                 GameState = GameStates.NotStarted;
+                await _eventManager.CallAsync(new GameReopenedEvent(this));
 
                 // Spawn the host.
                 await HandleJoinGameNew(host, false);
