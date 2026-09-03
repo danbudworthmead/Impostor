@@ -661,7 +661,18 @@ namespace Impostor.Server.Net.State
             GameNet.MeetingHud = meetingHud;
             meetingHud.PopulateForServerHostedMeeting(reporter);
 
-            _logger.LogTrace("{Code} - Spawning MeetingHud (netId {NetId})", Code, meetingHud.NetId);
+            _logger.LogInformation(
+                "{Code} - Spawning MeetingHud (netId {NetId}) with {Count} vote areas: {Voters}",
+                Code,
+                meetingHud.NetId,
+                ((IInnerMeetingHud)meetingHud).PlayerStates.Count,
+                string.Join(", ", ((IInnerMeetingHud)meetingHud).PlayerStates.Select(state =>
+                {
+                    var info = (InnerPlayerInfo)state.TargetPlayer;
+                    var isReal = _players.TryGetValue(info.ClientId, out var owner) && owner.Client.Connection != null;
+                    return $"{info.PlayerId}:\"{info.CurrentOutfit.PlayerName}\"(client={info.ClientId},real={isReal})";
+                })));
+
             await SendObjectSpawnAsync(meetingHud);
 
             // A host client repositions everyone into the meeting layout as part of starting
