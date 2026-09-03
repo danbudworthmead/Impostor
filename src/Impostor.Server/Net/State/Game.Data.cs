@@ -634,6 +634,52 @@ namespace Impostor.Server.Net.State
         }
 
         /// <summary>
+        ///     Spawns a meeting hud on the server's own initiative. A host client is what
+        ///     normally does this in response to a player reporting a body or calling an
+        ///     emergency meeting; nothing else is watching for that under SAAH, so the report
+        ///     handler in InnerPlayerControl calls this directly instead.
+        /// </summary>
+        /// <param name="reporter">The reported body's owner, or null for an emergency button call.</param>
+        /// <returns>The new meeting hud, or null if one was already in progress.</returns>
+        internal async ValueTask<InnerMeetingHud?> SpawnMeetingHudAsync(InnerPlayerInfo? reporter)
+        {
+            if (GameNet.MeetingHud != null)
+            {
+                return null;
+            }
+
+            var meetingHud = (InnerMeetingHud)ActivatorUtilities.CreateInstance(_serviceProvider, typeof(InnerMeetingHud), this);
+            meetingHud.SpawnFlags = SpawnFlags.None;
+
+            if (!RegisterServerObject(meetingHud, ServerOwned))
+            {
+                return null;
+            }
+
+            GameNet.MeetingHud = meetingHud;
+            meetingHud.PopulateForServerHostedMeeting(reporter);
+
+            _logger.LogTrace("{Code} - Spawning MeetingHud (netId {NetId})", Code, meetingHud.NetId);
+            await SendObjectSpawnAsync(meetingHud);
+
+            // A host client repositions everyone into the meeting layout as part of starting
+            // one. The virtual host seat has no character to move.
+            foreach (var player in _players.Values)
+            {
+                if (player.Character == null || GameNet.ShipStatus == null)
+                {
+                    continue;
+                }
+
+                await player.Character.NetworkTransform.SetPositionAsync(player, GameNet.ShipStatus.GetSpawnLocation(player.Character, PlayerCount, false));
+            }
+
+            await _eventManager.CallAsync(new MeetingStartedEvent(this, meetingHud));
+
+            return meetingHud;
+        }
+
+        /// <summary>
         ///     Creates a player's character, which a host client would normally spawn on their
         ///     behalf. It is owned by that player so they keep control of their own movement.
         /// </summary>

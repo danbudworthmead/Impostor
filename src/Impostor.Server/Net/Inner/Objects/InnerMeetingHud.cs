@@ -70,9 +70,34 @@ namespace Impostor.Server.Net.Inner.Objects
 
         public IReadOnlyCollection<IInnerMeetingHud.IJudgeOverrule> JudgeOverrules => _judgeOverrules;
 
+        /// <summary>
+        ///     Never needed before this mirrors DeserializeAsync's own wire format: a real host
+        ///     always sends its own already-populated spawn bytes for a meeting hud, which the
+        ///     server only ever relays rather than constructs - see SpawnMeetingHudAsync for the
+        ///     server-hosted game that has no host client to have constructed them in the first
+        ///     place.
+        /// </summary>
+        /// <param name="writer">The writer to serialize the current vote state into.</param>
+        /// <param name="initialState">Unused - the current vote state is always accurate, whether this is a fresh spawn or a resync.</param>
+        /// <returns>Always true; there is no failure case to report.</returns>
         public override ValueTask<bool> SerializeAsync(IMessageWriter writer, bool initialState)
         {
-            throw new NotImplementedException();
+            writer.WritePacked((uint)_playerStates.Length);
+
+            foreach (var playerState in _playerStates)
+            {
+                writer.StartMessage(playerState.TargetPlayer.PlayerId);
+                writer.Write(playerState.VotedForId);
+                writer.Write(playerState.DidReport);
+                writer.EndMessage();
+            }
+
+            // No Judge overrules are ever queued for a meeting the server itself just started.
+            // A pre-Judge client ignores these trailing bytes rather than choking on them - the
+            // same reason it can already ignore a same-version host's overrule bytes today.
+            writer.WritePacked(0);
+
+            return new ValueTask<bool>(true);
         }
 
         public override async ValueTask DeserializeAsync(IClientPlayer sender, IClientPlayer? target, IMessageReader reader, bool initialState)
@@ -212,6 +237,18 @@ namespace Impostor.Server.Net.Inner.Objects
                 .OrderBy(x => x.Controller?.NetId) // The host player hold MeetingHud players list sorted by NetId
                 .Select(x => new PlayerVoteArea(this, x, x.Disconnected || x.IsDead))
                 .ToArray();
+        }
+
+        /// <summary>
+        ///     Sets up vote state the way a client-sent spawn's initial state normally would (see
+        ///     DeserializeAsync), for a meeting the server spawned directly because there is no
+        ///     host client to have sent that state in the first place.
+        /// </summary>
+        /// <param name="reporter">The reported body's owner, or null for an emergency button call.</param>
+        internal void PopulateForServerHostedMeeting(InnerPlayerInfo? reporter)
+        {
+            PopulateButtons();
+            Reporter = reporter;
         }
 
         private async ValueTask HandleVoteAsync(PlayerVoteArea playerState)
@@ -430,11 +467,50 @@ namespace Impostor.Server.Net.Inner.Objects
 
             if (exiled != null && exiled.PlayerInfo != null)
             {
-                exiled.PlayerInfo.LastDeathReason = DeathReason.Exile;
-                await _eventManager.CallAsync(new PlayerExileEvent(Game, Game.GetClientPlayer(exiled!.OwnerId)!, exiled));
+                if (Game.IsServerHosted)
+                {
+                    // A host client is what normally applies this once it has shown everyone the
+                    // result - with none, the server does it directly. ForceExileAsync already
+                    // updates the player, tells their own client, and raises PlayerExileEvent
+                    // itself, so this replaces the manual version below rather than joining it.
+                    await exiled.ForceExileAsync();
+                }
+                else
+                {
+                    exiled.PlayerInfo.LastDeathReason = DeathReason.Exile;
+                    await _eventManager.CallAsync(new PlayerExileEvent(Game, Game.GetClientPlayer(exiled!.OwnerId)!, exiled));
+                }
+            }
+
+            if (Game.IsServerHosted)
+            {
+                // A host client is also what tells everyone the meeting itself is over, once it
+                // has shown them the result.
+                await BroadcastMeetingResultAsync(exiled?.PlayerId, tie);
+                Game.GameNet.MeetingHud = null;
             }
 
             await _eventManager.CallAsync(new MeetingEndedEvent(Game, this, exiled, tie, wasOverruled, overrideId));
+        }
+
+        /// <summary>
+        ///     Tells every client the vote is in and the meeting is closing - VotingComplete
+        ///     normally carries each player's own final vote state too, but nothing in this
+        ///     protocol implementation has ever needed to construct that (SerializeAsync above
+        ///     does not implement it either), so this sends none. Clients already know how
+        ///     everyone voted from having lived through the CastVote broadcasts during the
+        ///     meeting; what none of them can know on their own is the tie/exile outcome and that
+        ///     it's time to close, which is exactly what this still carries.
+        /// </summary>
+        private async ValueTask BroadcastMeetingResultAsync(byte? exiledPlayerId, bool tie)
+        {
+            using var completeWriter = Game.StartRpc(NetId, RpcCalls.VotingComplete);
+            Rpc23VotingComplete.Serialize(completeWriter, Array.Empty<byte>(), exiledPlayerId ?? byte.MaxValue, tie);
+            await Game.FinishRpcAsync(completeWriter);
+
+            using var closeWriter = Game.StartRpc(NetId, RpcCalls.CloseMeeting);
+            Rpc22Close.Serialize(closeWriter);
+            await Game.FinishRpcAsync(closeWriter);
         }
     }
 }

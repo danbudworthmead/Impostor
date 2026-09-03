@@ -268,6 +268,15 @@ namespace Impostor.Server.Net.Inner.Objects
                     }
 
                     Rpc11ReportDeadBody.Deserialize(reader, out var targetId);
+
+                    // A host client is what normally reacts to this by spawning a meeting hud;
+                    // nothing else does under SAAH, so the server does it directly instead.
+                    if (Game.IsServerHosted)
+                    {
+                        var reporter = targetId == byte.MaxValue ? null : Game.GameNet.GameData!.GetPlayerById(targetId);
+                        await Game.SpawnMeetingHudAsync(reporter);
+                    }
+
                     break;
                 }
 

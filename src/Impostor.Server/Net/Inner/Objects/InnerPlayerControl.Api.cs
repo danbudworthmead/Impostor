@@ -8,7 +8,6 @@ using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Net.Inner.Objects.Components;
 using Impostor.Api.Net.Messages.Rpcs;
 using Impostor.Server.Events.Player;
-using Impostor.Server.Net.Inner;
 
 namespace Impostor.Server.Net.Inner.Objects
 {

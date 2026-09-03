@@ -16,5 +16,7 @@ namespace Impostor.Server.Net.State
         public InnerVoteBanSystem? VoteBan { get; internal set; }
 
         public InnerShipStatus? ShipStatus { get; internal set; }
+
+        public InnerMeetingHud? MeetingHud { get; internal set; }
     }
 }
