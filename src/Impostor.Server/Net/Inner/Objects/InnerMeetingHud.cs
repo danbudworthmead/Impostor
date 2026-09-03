@@ -249,6 +249,11 @@ namespace Impostor.Server.Net.Inner.Objects
         {
             PopulateButtons();
             Reporter = reporter;
+
+            if (reporter != null)
+            {
+                _playerStates.SingleOrDefault(state => state.TargetPlayer.PlayerId == reporter.PlayerId)?.SetDidReport();
+            }
         }
 
         private async ValueTask HandleVoteAsync(PlayerVoteArea playerState)

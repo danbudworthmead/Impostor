@@ -12,6 +12,7 @@ using Impostor.Api.Innersloth.Customization;
 using Impostor.Api.Net;
 using Impostor.Api.Net.Inner;
 using Impostor.Api.Net.Inner.Objects;
+using Impostor.Api.Net.Messages.Rpcs;
 using Impostor.Api.Unity;
 using Impostor.Hazel;
 using Impostor.Server.Events.Meeting;
@@ -639,9 +640,10 @@ namespace Impostor.Server.Net.State
         ///     emergency meeting; nothing else is watching for that under SAAH, so the report
         ///     handler in InnerPlayerControl calls this directly instead.
         /// </summary>
+        /// <param name="caller">The player whose ReportDeadBody this is - stands in for the host as the RPC's sender since there is no host character to use.</param>
         /// <param name="reporter">The reported body's owner, or null for an emergency button call.</param>
         /// <returns>The new meeting hud, or null if one was already in progress.</returns>
-        internal async ValueTask<InnerMeetingHud?> SpawnMeetingHudAsync(InnerPlayerInfo? reporter)
+        internal async ValueTask<InnerMeetingHud?> SpawnMeetingHudAsync(InnerPlayerControl caller, InnerPlayerInfo? reporter)
         {
             if (GameNet.MeetingHud != null)
             {
@@ -674,6 +676,18 @@ namespace Impostor.Server.Net.State
                 await player.Character.NetworkTransform.SetPositionAsync(player, GameNet.ShipStatus.GetSpawnLocation(player.Character, PlayerCount, false));
             }
 
+            // The object spawn above only carries vote state - a host client also broadcasts
+            // StartMeeting itself (addressed as its own character) to actually cue every
+            // client's meeting screen open. There is no host character to address it as, so the
+            // reporting player's stands in instead.
+            var targetId = reporter?.PlayerId ?? byte.MaxValue;
+            using (var writer = StartRpc(caller.NetId, RpcCalls.StartMeeting))
+            {
+                Rpc14StartMeeting.Serialize(writer, targetId);
+                await FinishRpcAsync(writer);
+            }
+
+            await _eventManager.CallAsync(new PlayerStartMeetingEvent(this, GetClientPlayer(caller.OwnerId)!, caller, reporter?.Controller));
             await _eventManager.CallAsync(new MeetingStartedEvent(this, meetingHud));
 
             return meetingHud;

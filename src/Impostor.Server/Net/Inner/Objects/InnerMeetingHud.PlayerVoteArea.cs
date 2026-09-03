@@ -78,6 +78,16 @@ namespace Impostor.Server.Net.Inner.Objects
             {
                 VotedForId = votedFor;
             }
+
+            /// <summary>
+            ///     Marks this as the vote area for whoever reported the body. Normally set by
+            ///     Deserialize from a host-sent spawn's own bytes; a server-hosted meeting has no
+            ///     such bytes to read this back out of, so SpawnMeetingHudAsync sets it directly.
+            /// </summary>
+            internal void SetDidReport()
+            {
+                DidReport = true;
+            }
         }
     }
 }

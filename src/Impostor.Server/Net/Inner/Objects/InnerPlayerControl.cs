@@ -274,7 +274,7 @@ namespace Impostor.Server.Net.Inner.Objects
                     if (Game.IsServerHosted)
                     {
                         var reporter = targetId == byte.MaxValue ? null : Game.GameNet.GameData!.GetPlayerById(targetId);
-                        await Game.SpawnMeetingHudAsync(reporter);
+                        await Game.SpawnMeetingHudAsync(this, reporter);
                     }
 
                     break;

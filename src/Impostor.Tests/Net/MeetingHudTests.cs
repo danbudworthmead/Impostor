@@ -1,10 +1,13 @@
 #nullable enable
 
 using System;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Impostor.Api.Config;
+using Impostor.Api.Events;
 using Impostor.Api.Events.Managers;
+using Impostor.Api.Events.Player;
 using Impostor.Api.Games;
 using Impostor.Api.Games.Managers;
 using Impostor.Api.Innersloth;
@@ -12,6 +15,7 @@ using Impostor.Api.Innersloth.GameOptions;
 using Impostor.Api.Net;
 using Impostor.Api.Net.Custom;
 using Impostor.Api.Net.Inner;
+using Impostor.Api.Net.Inner.Objects;
 using Impostor.Api.Net.Manager;
 using Impostor.Api.Net.Messages.Rpcs;
 using Impostor.Api.Utils;
@@ -24,6 +28,7 @@ using Impostor.Server.Net;
 using Impostor.Server.Net.Custom;
 using Impostor.Server.Net.Factories;
 using Impostor.Server.Net.Inner;
+using Impostor.Server.Net.Inner.Objects;
 using Impostor.Server.Net.Manager;
 using Impostor.Server.Net.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -223,6 +228,54 @@ namespace Impostor.Tests.Net
             Assert.Null(game.GameNet.MeetingHud!.Reporter);
         }
 
+        private sealed class StartMeetingListener : IEventListener
+        {
+            public int CallCount { get; private set; }
+
+            public IClientPlayer? ClientPlayer { get; private set; }
+
+            public IInnerPlayerControl? Body { get; private set; }
+
+            [EventListener]
+            public void OnStartMeeting(IPlayerStartMeetingEvent e)
+            {
+                CallCount++;
+                ClientPlayer = e.ClientPlayer;
+                Body = e.Body;
+            }
+        }
+
+        [Fact]
+        public async Task ReportDeadBody_ServerHosted_BroadcastsStartMeeting()
+        {
+            await using var provider = BuildServices();
+            var gameManager = provider.GetRequiredService<GameManager>();
+            var clientManager = provider.GetRequiredService<ClientManager>();
+            var readerPool = provider.GetRequiredService<ObjectPool<MessageReader>>();
+            var eventManager = provider.GetRequiredService<IEventManager>();
+
+            var listener = new StartMeetingListener();
+            using var registration = eventManager.RegisterListener(listener);
+
+            var game = (Game)(await gameManager.CreateAsync(new NormalGameOptions(), GameFilterOptions.CreateDefault()))!;
+            await game.InitializeServerHostAsync(new TestOwnerClient());
+
+            var first = await JoinBotAsync(game, clientManager, readerPool, "First", 40051);
+            var second = await JoinBotAsync(game, clientManager, readerPool, "Second", 40052);
+
+            await game.StartAsync();
+
+            // The meeting hud object spawn only ever carried vote state - StartMeeting is the
+            // separate signal a host client also sends to actually cue every client's meeting
+            // screen open, which the stuck-screen report this test class exists for turned out
+            // to be missing entirely.
+            await ReportDeadBodyAsync(game, readerPool, first, second.Character!.PlayerId);
+
+            Assert.Equal(1, listener.CallCount);
+            Assert.Equal(first.Client.Id, listener.ClientPlayer!.Client.Id);
+            Assert.Equal(second.Character!.PlayerId, listener.Body!.PlayerId);
+        }
+
         [Fact]
         public async Task ReportDeadBody_WithABody_RecordsTheReporter()
         {
@@ -243,6 +296,18 @@ namespace Impostor.Tests.Net
 
             Assert.NotNull(game.GameNet.MeetingHud);
             Assert.Equal(second.Character!.PlayerId, game.GameNet.MeetingHud!.Reporter?.PlayerId);
+
+            // Not just the server's own bookkeeping - DidReport is what actually goes out over
+            // the wire in the vote area list, which is what the client reads to know who found
+            // the body at all. Missing this was the actual cause of the meeting screen this
+            // whole test class exists for getting stuck with nothing to show.
+            var reporterState = ((IInnerMeetingHud)game.GameNet.MeetingHud!).PlayerStates
+                .Single(state => ((InnerPlayerInfo)state.TargetPlayer).PlayerId == second.Character!.PlayerId);
+            Assert.True(reporterState.DidReport);
+
+            var everyoneElse = ((IInnerMeetingHud)game.GameNet.MeetingHud!).PlayerStates
+                .Where(state => ((InnerPlayerInfo)state.TargetPlayer).PlayerId != second.Character!.PlayerId);
+            Assert.All(everyoneElse, state => Assert.False(state.DidReport));
         }
 
         [Fact]
