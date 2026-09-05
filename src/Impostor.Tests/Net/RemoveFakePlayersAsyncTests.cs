@@ -1,5 +1,7 @@
 #nullable enable
 
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -12,6 +14,7 @@ using Impostor.Api.Innersloth.GameOptions;
 using Impostor.Api.Net;
 using Impostor.Api.Net.Custom;
 using Impostor.Api.Net.Manager;
+using Impostor.Api.Net.Messages;
 using Impostor.Api.Utils;
 using Impostor.Hazel;
 using Impostor.Hazel.Abstractions;
@@ -108,12 +111,62 @@ namespace Impostor.Tests.Net
 
             public float AveragePing => 0f;
 
-            public ValueTask SendAsync(IMessageWriter writer) => default;
+            public List<byte[]> SentMessages { get; } = new();
+
+            public ValueTask SendAsync(IMessageWriter writer)
+            {
+                SentMessages.Add(writer.ToByteArray(false));
+                return default;
+            }
 
             public ValueTask DisconnectAsync(string? reason, IMessageWriter? writer = null) => default;
         }
 
-        private static async Task JoinBotAsync(Game game, ClientManager clientManager, ObjectPool<MessageReader> readerPool, string name, int port)
+        /// <summary>
+        /// Counts distinct NetIds despawned across every captured GameData message - a
+        /// DespawnFlag sub-message per NetId, the same shape SendObjectDespawnAsync produces.
+        /// </summary>
+        private static int CountDistinctDespawnedNetIds(IEnumerable<byte[]> sentMessages, ObjectPool<MessageReader> readerPool)
+        {
+            var netIds = new HashSet<uint>();
+
+            foreach (var bytes in sentMessages)
+            {
+                // Update's own tag/length parameters set metadata on this reader instance, not
+                // parsed from the buffer - the real outer envelope tag only comes back out via
+                // ReadMessage, confirmed empirically against a live capture before this was
+                // written.
+                using var raw = readerPool.Get();
+                raw.Update(bytes, 0, 0, bytes.Length, 0, null);
+                using var envelope = raw.ReadMessage();
+
+                if (envelope.Tag != MessageFlags.GameData && envelope.Tag != MessageFlags.GameDataTo)
+                {
+                    continue;
+                }
+
+                envelope.ReadInt32(); // game code
+
+                if (envelope.Tag == MessageFlags.GameDataTo)
+                {
+                    envelope.ReadPackedInt32(); // target client id
+                }
+
+                while (envelope.Position < envelope.Length)
+                {
+                    using var inner = envelope.ReadMessage();
+
+                    if (inner.Tag == GameDataTag.DespawnFlag)
+                    {
+                        netIds.Add(inner.ReadPackedUInt32());
+                    }
+                }
+            }
+
+            return netIds.Count;
+        }
+
+        private static async Task<TestHazelConnection> JoinBotAsync(Game game, ClientManager clientManager, ObjectPool<MessageReader> readerPool, string name, int port)
         {
             var connection = new TestHazelConnection(new IPEndPoint(IPAddress.Loopback, port));
 
@@ -144,6 +197,8 @@ namespace Impostor.Tests.Net
             await game.HandleGameDataAsync(reader, sender, false);
 
             Assert.NotNull(client.Player!.Character);
+
+            return connection;
         }
 
         [Fact]
@@ -209,6 +264,32 @@ namespace Impostor.Tests.Net
             Assert.Equal(GameStates.Started, game.GameState);
 
             Assert.All(playerIds, id => Assert.Null(game.GameNet.GameData.GetPlayerById(id)));
+        }
+
+        [Fact]
+        public async Task StartAsync_DespawnsEveryComponent_NotJustTheCharacterItself()
+        {
+            await using var provider = BuildServices();
+            var gameManager = provider.GetRequiredService<GameManager>();
+            var clientManager = provider.GetRequiredService<ClientManager>();
+            var readerPool = provider.GetRequiredService<ObjectPool<MessageReader>>();
+
+            var game = (Game)(await gameManager.CreateAsync(new NormalGameOptions(), GameFilterOptions.CreateDefault()))!;
+            await game.InitializeServerHostAsync(new TestOwnerClient());
+
+            var connection = await JoinBotAsync(game, clientManager, readerPool, "Real", 40921);
+
+            var mascot = await game.SpawnFakePlayerAsync("Mascot", new Vector2(0f, -15f));
+            Assert.NotNull(mascot?.Character);
+
+            connection.SentMessages.Clear();
+
+            await game.StartAsync();
+
+            // The mascot's character is 3 registered components (control, physics, transform),
+            // each with its own NetId - a fix that only despawns the control leaves this at 1.
+            var despawnedNetIds = CountDistinctDespawnedNetIds(connection.SentMessages, readerPool);
+            Assert.True(despawnedNetIds >= 3, $"Expected at least 3 distinct despawned NetIds, got {despawnedNetIds}.");
         }
     }
 }

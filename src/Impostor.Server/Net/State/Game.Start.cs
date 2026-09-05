@@ -156,11 +156,14 @@ namespace Impostor.Server.Net.State
                 return;
             }
 
-            await SendObjectDespawnAsync(character);
-
-            // Physics and the transform are registered alongside the control and have to go too.
+            // Physics and the transform are registered alongside the control, each with its own
+            // NetId, and each needs its own despawn message - not just the control's. A client
+            // never told about the other two does not clean them up on its own; live testing
+            // caught this as clients later trying (and failing, the server has already forgotten
+            // the NetId) to despawn them themselves, minutes after the fact.
             foreach (var component in character.GetComponentsInChildren<InnerNetObject>())
             {
+                await SendObjectDespawnAsync(component);
                 RemoveNetObject(component);
             }
 
