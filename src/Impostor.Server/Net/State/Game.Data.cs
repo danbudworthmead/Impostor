@@ -110,6 +110,9 @@ namespace Impostor.Server.Net.State
                         else
                         {
                             _logger.LogWarning("Received DataFlag for unregistered NetId {0}.", netId);
+
+                            var unregisteredNetIdEvent = new PlayerUnregisteredNetIdEvent(this, sender, sender.Character!, GameDataTag.DataFlag, netId, reader.Buffer.AsMemory(reader.Offset + reader.Position, reader.Length - reader.Position));
+                            await _eventManager.CallAsync(unregisteredNetIdEvent);
                         }
 
                         break;
@@ -129,6 +132,9 @@ namespace Impostor.Server.Net.State
                         else
                         {
                             _logger.LogWarning("Received RpcFlag for unregistered NetId {0}.", netId);
+
+                            var unregisteredNetIdEvent = new PlayerUnregisteredNetIdEvent(this, sender, sender.Character!, GameDataTag.RpcFlag, netId, reader.Buffer.AsMemory(reader.Offset + reader.Position, reader.Length - reader.Position));
+                            await _eventManager.CallAsync(unregisteredNetIdEvent);
                         }
 
                         break;
