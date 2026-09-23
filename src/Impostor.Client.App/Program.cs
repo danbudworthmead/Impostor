@@ -1,75 +1,50 @@
-﻿using System.Net;
-using System.Threading;
+using System;
+using System.Net;
 using System.Threading.Tasks;
-using Impostor.Api.Innersloth;
-using Impostor.Api.Innersloth.GameOptions;
-using Impostor.Api.Net.Messages.C2S;
-using Impostor.Hazel;
-using Impostor.Hazel.Abstractions;
-using Impostor.Hazel.Udp;
+using Impostor.Client;
 using Serilog;
 
 namespace Impostor.Client.App
 {
     internal static class Program
     {
-        private static readonly ManualResetEvent QuitEvent = new ManualResetEvent(false);
-
         private static async Task Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
                 .CreateLogger();
 
-            var writeHandshake = MessageWriter.Get(MessageType.Reliable);
+            var endpoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22023);
 
-            writeHandshake.Write(50516550);
-            writeHandshake.Write("AeonLucid");
+            await using var host = new BotClient(endpoint, "BotHost");
+            await host.ConnectAsync();
+            Log.Information("Host connected.");
 
-            var writeGameCreate = MessageWriter.Get(MessageType.Reliable);
+            var code = await host.HostGameAsync();
+            Log.Information("Hosted game {Code}.", code.Code);
 
-            Message00HostGameC2S.Serialize(writeGameCreate, new LegacyGameOptionsData
-            {
-                MaxPlayers = 4,
-                NumImpostors = 2,
-            }, CrossplayFlags.All, GameFilterOptions.CreateDefault());
+            await using var joiner = new BotClient(endpoint, "BotJoin");
+            await joiner.ConnectAsync();
+            Log.Information("Joiner connected.");
 
-            // TODO: ObjectPool for MessageReaders
-            using (var connection = new UdpClientConnection(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22023), null))
-            {
-                var e = new ManualResetEvent(false);
+            await joiner.JoinGameAsync(code);
+            Log.Information("Sent join request.");
 
-                // Register events.
-                connection.DataReceived = DataReceived;
-                connection.Disconnected = Disconnected;
+            await Task.Delay(3000);
 
-                // Connect and send handshake.
-                await connection.ConnectAsync(writeHandshake.ToByteArray(false));
-                Log.Information("Connected.");
+            Log.Information(
+                "host: clientId={0} characterNetId={1} role={2} disconnect={3}",
+                host.ClientId,
+                host.CharacterNetId,
+                host.Role,
+                host.DisconnectReason);
 
-                // Create a game.
-                await connection.SendAsync(writeGameCreate);
-                Log.Information("Requested game creation.");
-
-                // Recycle.
-                writeHandshake.Recycle();
-                writeGameCreate.Recycle();
-
-                e.WaitOne();
-            }
-        }
-
-        private static ValueTask DataReceived(DataReceivedEventArgs e)
-        {
-            Log.Information("Received data.");
-            return default;
-        }
-
-        private static ValueTask Disconnected(DisconnectedEventArgs e)
-        {
-            Log.Information("Disconnected: " + e.Reason);
-            QuitEvent.Set();
-            return default;
+            Log.Information(
+                "joiner: clientId={0} characterNetId={1} role={2} disconnect={3}",
+                joiner.ClientId,
+                joiner.CharacterNetId,
+                joiner.Role,
+                joiner.DisconnectReason);
         }
     }
 }
