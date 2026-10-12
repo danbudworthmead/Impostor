@@ -36,12 +36,6 @@ namespace Impostor.Server.Net.Inner.Objects
         public int ClientId { get; internal set; }
 
         /// <summary>
-        ///     Gets or sets the owning client's claimed friend code, shown to other players. Empty
-        ///     when unknown. Client-supplied and unverified; never use it for authorization.
-        /// </summary>
-        public string FriendCode { get; internal set; } = string.Empty;
-
-        /// <summary>
         ///     Gets or sets the owning client's claimed product user id, used by the client's own
         ///     friend system. Empty when unknown. Client-supplied and unverified.
         /// </summary>
