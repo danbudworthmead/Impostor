@@ -67,6 +67,11 @@ public sealed class ListingManager
                 continue;
             }
 
+            if (game.ModGuid != null)
+            {
+                continue;
+            }
+
             if (!_compatibilityConfig.AllowVersionMixing &&
                 game.Host != null &&
                 gameVersion != null &&
