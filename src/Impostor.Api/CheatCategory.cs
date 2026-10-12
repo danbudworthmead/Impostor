@@ -1,5 +1,6 @@
 namespace Impostor.Api;
 
+// NOTE: when adding items to this enum, add them to the bottom for API stability
 public enum CheatCategory
 {
     /// <summary>A packet used a part of the network protocol that is unknown to Impostor, like a custom RPC.</summary>
@@ -37,4 +38,10 @@ public enum CheatCategory
 
     /// <summary>Legacy category for unsorted anticheat checks.</summary>
     Other,
+
+    /// <summary>A packet was sent with more items than possible in the game.</summary>
+    ItemLimits,
+
+    /// <summary>A packet contained an identifier (friendcode or puid) that does not match the one known for that player.</summary>
+    Identifiers,
 }

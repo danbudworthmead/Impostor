@@ -95,7 +95,7 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
                 case RpcCalls.CloseDoorsOfType:
                 {
                     if (!await ValidateCmd(call, sender, target) ||
-                        !await ValidateImpostor(call, sender, sender.Character!.PlayerInfo))
+                        !await ValidateImpostor(call, sender, sender.Character?.PlayerInfo))
                     {
                         return false;
                     }
@@ -113,6 +113,30 @@ namespace Impostor.Server.Net.Inner.Objects.ShipStatus
 
                     // TODO: properly deserialize this RPC
                     Rpc35UpdateSystem.Deserialize(reader, Game, out var systemType, out var playerControl, out var state);
+                    break;
+                }
+
+                case RpcCalls.SpiritGuideMessage:
+                {
+                    if (!await ValidateTarget(call, sender, target) ||
+                        !await ValidateRole(call, sender, sender.Character?.PlayerInfo, RoleTypes.SpiritGuide))
+                    {
+                        return false;
+                    }
+
+                    Rpc67SpiritGuideMessage.Deserialize(reader, out var images);
+
+                    if (images.Length == 0 || images.Length > 3)
+                    {
+                        if (await sender.Client.ReportCheatAsync(
+                            RpcCalls.SpiritGuideMessage,
+                            CheatCategory.ItemLimits,
+                            $"Client sent {images.Length} images (allowed: 1, 2 or 3)"))
+                        {
+                            return false;
+                        }
+                    }
+
                     break;
                 }
 
